@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Physics Test Arena",
-  description: "Hệ thống kiểm tra online Vật lí"
+  title: "CHINH PHỤC KHTN CÙNG THẦY TUẤN",
+  description: "Hệ thống kiểm tra online KHTN"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
