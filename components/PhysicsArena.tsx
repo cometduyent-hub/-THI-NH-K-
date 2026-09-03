@@ -167,7 +167,21 @@ export default function PhysicsArena() {
   return <main className="app-shell">
     <header className="topbar">
       <div className="brand"><span className="atom">⚛</span><div><b>PHYSICS TEST ARENA</b><small>Hệ thống kiểm tra online Vật lí</small></div></div>
-      <button className={mode==="teacher"?"active":""} onClick={()=>{ const pass = prompt("Nhập mật khẩu giáo viên:"); if(pass === "123456") setMode("teacher"); else if(pass !== null) alert("Sai mật khẩu!"); }}>👩‍🏫 Giáo viên</button>
+     <div className="top-actions">
+  {mode === "teacher" ? (
+    <button onClick={() => setMode("student")}>🔓 Thoát quyền GV</button>
+  ) : (
+    <button onClick={() => {
+      const pass = prompt("Nhập mật khẩu giáo viên:");
+      if (pass === "123456") {
+        setMode("teacher");
+      } else if (pass !== null) {
+        alert("Sai mật khẩu!");
+      }
+    }}>🔒 Giáo viên</button>
+  )}
+  <button className={mode==="student"?"active":""} onClick={()=>setMode("student")}>👨‍🎓 Học sinh</button>
+</div>
     </header>
 
     {notice && <div className="notice">{notice}<button onClick={()=>setNotice("")}>×</button></div>}
