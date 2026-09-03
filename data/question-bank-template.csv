@@ -1,0 +1,5 @@
+id,section,subject,grade,topic,difficulty,content,optionA,optionB,optionC,optionD,correctOption,tfA,tfB,tfC,tfD,shortAnswer,tolerance,points,imageUrl
+VL001,MCQ,Vật lí,8,Chuyển động,NB,"Câu hỏi mẫu?","Đáp án A","Đáp án B","Đáp án C","Đáp án D",B,,,,,,0.25,
+VL002,TF,Vật lí,8,Lực,TH,"Bốn nhận định đúng sai mẫu.",,,,,,true,false,true,false,,,1,
+VL003,SHORT,Vật lí,8,Công suất,VD,"Tính công suất của máy...",,,,,,,,,,30,0.1,0.5,
+VL004,ESSAY,Vật lí,8,Áp suất,VD,"Giải thích hiện tượng bằng kiến thức Vật lí.",,,,,,,,,,,,2,

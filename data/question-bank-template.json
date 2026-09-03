@@ -1,0 +1,31 @@
+[
+  {
+    "id": "VL001",
+    "section": "MCQ",
+    "subject": "Vật lí",
+    "grade": "8",
+    "topic": "Chuyển động",
+    "difficulty": "NB",
+    "content": "Câu hỏi mẫu?",
+    "optionA": "Đáp án A",
+    "optionB": "Đáp án B",
+    "optionC": "Đáp án C",
+    "optionD": "Đáp án D",
+    "correctOption": "B",
+    "points": 0.25
+  },
+  {
+    "id": "VL002",
+    "section": "TF",
+    "subject": "Vật lí",
+    "grade": "8",
+    "topic": "Lực",
+    "difficulty": "TH",
+    "content": "Bốn nhận định đúng sai mẫu.",
+    "tfA": true,
+    "tfB": false,
+    "tfC": true,
+    "tfD": false,
+    "points": 1
+  }
+]
