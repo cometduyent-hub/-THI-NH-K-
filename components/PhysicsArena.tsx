@@ -465,8 +465,34 @@ function StudentView({exam,answers,setAnswers,current,setCurrent,seconds,setSeco
   const q=exam[current];
   const [started,setStarted]=useState(false);
   useMemo(()=>{ if(!started||submitted)return; const t=setInterval(()=>setSeconds((s:number)=>Math.max(0,s-1)),1000); return()=>clearInterval(t); },[started,submitted,setSeconds]);
-  if(!started) return <div className="student-start"><div className="glow-orb">⚛</div><h1>PHYSICS TEST ARENA</h1><p>Phòng kiểm tra Vật lí trực tuyến</p><input placeholder="Họ và tên học sinh" value={studentName} onChange={e=>setStudentName(e.target.value)}/><button className="primary-btn" onClick={()=>setStarted(true)} disabled={!studentName.trim()}>BẮT ĐẦU LÀM BÀI</button><small>Đề sẽ được xáo ngẫu nhiên theo ma trận giáo viên.</small></div>;
-  if(!exam.length) return <div className="student-start"><h1>Chưa có đề thi</h1><p>Giáo viên cần tạo đề trước.</p></div>;
+  if(!started) return <div className="student-start" style={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", padding: "20px", textAlign: "center"}}>
+    <div className="glow-orb" style={{fontSize: "48px", marginBottom: "15px"}}>⚛️</div>
+    <h1 style={{fontSize: "28px", color: "#1e293b", marginBottom: "10px"}}>CHINH PHỤC KHTN CÙNG THẦY TUẤN</h1>
+    <p style={{color: "#64748b", marginBottom: "25px", maxWidth: "500px"}}>Phòng kiểm tra trực tuyến tích hợp KaTeX và chấm bài tự động.</p>
+    <div style={{background: "#fff", padding: "25px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", width: "100%", maxWidth: "400px", display: "flex", flexDirection: "column", gap: "15px", textAlign: "left"}}>
+        <div>
+            <label style={{display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "5px"}}>Họ và tên học sinh:</label>
+            <input type="text" placeholder="Ví dụ: Nguyễn Văn A" value={studentName} onChange={e=>setStudentName(e.target.value)} style={{width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px"}}/>
+        </div>
+        <div>
+            <label style={{display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "5px"}}>Lớp:</label>
+            <input type="text" placeholder="Ví dụ: 6/1" id="student-class-input" style={{width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px"}}/>
+        </div>
+        <div>
+            <label style={{display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "5px"}}>Trường:</label>
+            <input type="text" placeholder="Ví dụ: THCS..." id="student-school-input" style={{width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px"}}/>
+        </div>
+        <button className="primary-btn" style={{width: "100%", padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", fontSize: "15px", fontWeight: "600", cursor: "pointer", marginTop: "5px"}} onClick={()=>{
+            if(!studentName.trim()){ alert("Vui lòng nhập họ tên!"); return; }
+            const cls = (document.getElementById("student-class-input") as HTMLInputElement)?.value || "";
+            const sch = (document.getElementById("student-school-input") as HTMLInputElement)?.value || "";
+            // Gắn kèm thông tin lớp trường vào tên hoặc lưu trữ nếu cần
+            if(cls || sch) setStudentName(`${studentName} (Lớp: ${cls} - Trường: ${sch})`);
+            setStarted(true);
+        }}>🚀 Bắt đầu làm bài</button>
+    </div>
+</div>;
+if(!exam.length) return <div className="student-start"><h1>Chưa có đề thi</h1><p>Giáo viên cần tạo đề trước.</p></div>;
   const mm=String(Math.floor(seconds/60)).padStart(2,"0"), ss=String(seconds%60).padStart(2,"0");
  return <div className="student-shell"><header className="student-top"><div><b>PHYSICS TEST ARENA</b><small>({studentName})</small></div><div className={`timer ${seconds<60?"danger":""}`}>{mm}:{ss}</div></header>
     <div className="student-body"><aside className="student-nav"><h3>Danh sách câu hỏi</h3>{exam.map((x,i)=><button key={x.id} className={`${i===current?"current":""}${answers[x.id]!==undefined&&answers[x.id]!==""?" answered":""}`} onClick={()=>setCurrent(i)}>{i+1}</button>)}</aside>
