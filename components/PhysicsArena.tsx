@@ -64,18 +64,26 @@ function scoreTF(answer:boolean[]|undefined, key:boolean[]|undefined, point:numb
   return point*factor;
 }
 
-function parseRow(r:any): Question {
-  const section = String(r.section||"MCQ").toUpperCase() as Section;
-  const options = ["A","B","C","D"].map(k=>({key:k,text:String(r["option"+k]??"")})).filter(x=>x.text);
-  const tf = ["tfA","tfB","tfC","tfD"].map(k=>String(r[k]).toLowerCase()==="true" || r[k]===true);
-  return {
-    id:String(r.id||crypto.randomUUID()), section, subject:String(r.subject||"Vật lí"), grade:String(r.grade||"8"),
-    topic:String(r.topic||"Chưa phân loại"), difficulty:(String(r.difficulty||"TH").toUpperCase() as Difficulty),
-    content:String(r.content||""), imageUrl:String(r.imageUrl||"")||undefined,
-    options: options.length?options:undefined, correctOption:String(r.correctOption||"")||undefined,
-    tf: section==="TF"?tf:undefined, shortAnswer:String(r.shortAnswer??"")||undefined,
-    tolerance:Number(r.tolerance||0), points:Number(r.points||1)
-  };
+function parseRow(r: any): Question {
+    const section = String(r.section||"MCQ").toUpperCase() as Section;
+    const options = ["A","B","C","D"].map(k=>({key:k,text:String(r[`option${k}`]??r[`option_${k.toLowerCase()}`]??"")})).filter(x=>x.text);
+    const tf = ["tfA","tfB","tfC","tfD"].map(k=>String(r[k]).toLowerCase()==="true" || r[k]===true);
+    return {
+        id:String(r.id||crypto.randomUUID()),
+        section:section,
+        subject:String(r.subject||"Vật lí"),
+        grade:String(r.grade||"8"),
+        topic:String(r.topic||"Chưa phân loại"),
+        difficulty:(String(r.difficulty||"TH").toUpperCase() as Difficulty),
+        content:String(r.content||""),
+        imageUrl:String(r.imageUrl||"")||undefined,
+        options:options.length?options:undefined,
+        correctOption:String(r.correctOption||""),
+        tf: section==="TF"?tf:undefined,
+        shortAnswer:String(r.shortAnswer??"")||undefined,
+        tolerance:Number(r.tolerance||0),
+        points:Number(r.points||1)
+    };
 }
 
 export default function PhysicsArena() {
