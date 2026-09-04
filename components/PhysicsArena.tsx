@@ -67,12 +67,12 @@ function scoreTF(answer:boolean[]|undefined, key:boolean[]|undefined, point:numb
 function parseRow(r: any): Question {
     const section = String(r.section||"MCQ").toUpperCase() as Section;
     const options = ["A","B","C","D"].map(k=>({key:k,text:String(r[`option${k}`]??r[`option_${k.toLowerCase()}`]??"")})).filter(x=>x.text);
-    const tf = ["tfA","tfB","tfC","tfD"].map(k=>String(r[k]).toLowerCase()==="true" || r[k]===true);
+    const tf = ["tfA","tfB","tfC","tfD"].map(k=>String(r[k]).toLowerCase()==="true" || r[k]===true || r[k]===1 || r[k]==="1");
     return {
         id:String(r.id||crypto.randomUUID()),
         section:section,
-        subject:String(r.subject||"Vật lí"),
-        grade:String(r.grade||"8"),
+        subject:String(r.subject||"Khoa học tự nhiên"),
+        grade:String(r.grade||"7"),
         topic:String(r.topic||"Chưa phân loại"),
         difficulty:(String(r.difficulty||"TH").toUpperCase() as Difficulty),
         content:String(r.content||""),
@@ -80,6 +80,7 @@ function parseRow(r: any): Question {
         options:options.length?options:undefined,
         correctOption:String(r.correctOption||""),
         tf: section==="TF"?tf:undefined,
+        tfOptions: section==="TF"?options:undefined,
         shortAnswer:String(r.shortAnswer??"")||undefined,
         tolerance:Number(r.tolerance||0),
         points:Number(r.points||1)
@@ -261,7 +262,7 @@ function StudentView({exam,answers,setAnswers,current,setCurrent,seconds,setSeco
     <div className="student-body"><aside className="question-nav"><h3>Danh sách câu</h3>{exam.map((x,i)=><button key={x.id} className={`${i===current?"current ":""}${answers[x.id]!==undefined?"answered":""}`} onClick={()=>setCurrent(i)}>{i+1}</button>)}<div className="legend"><span>● Đã trả lời</span><span>○ Chưa trả lời</span></div></aside>
     <article className="question-card"><div className="q-meta"><Badge>{sectionLabel[q.section]}</Badge><span>Câu {current+1}/{exam.length}</span></div><h2>{q.content}</h2>{q.imageUrl&&<img className="question-image" src={q.imageUrl} alt="hình câu hỏi"/>}
       {q.section==="MCQ"&&q.options?.map(o=><label className={`option ${answers[q.id]===o.key?"selected":""}`} key={o.key}><input type="radio" name={q.id} checked={answers[q.id]===o.key} onChange={()=>setAnswers((a:any)=>({...a,[q.id]:o.key}))}/><b>{o.key}.</b>{o.text}</label>)}
-      {q.section==="TF"&&<div className="tf-grid">{["a","b","c","d"].map((x,i)=><div className="tf-row" key={x}><span><b>{x})</b> {q.options?.[i]?.text || `Nhận định ${x.toUpperCase()} của câu hỏi`}</span><button className={answers[q.id]?.[i]===true?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),true,...(a[q.id]||[]).slice(i+1)]}))}>Đúng</button><button className={answers[q.id]?.[i]===false?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),false,...(a[q.id]||[]).slice(i+1)]}))}>Sai</button></div>)}</div>}
+      {q.section==="TF"&&<div className="tf-grid">{["a","b","c","d"].map((x,i)=><div className="tf-row" key={x}><span><b>{x})</b> {q.options?.[i]?.text || q.tfOptions?.[i]?.text || `Nhận định ${x.toUpperCase()} của câu hỏi`}</span><button className={answers[q.id]?.[i]===true?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),true,...(a[q.id]||[]).slice(i+1)]}))}>Đúng</button><button className={answers[q.id]?.[i]===false?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),false,...(a[q.id]||[]).slice(i+1)]}))}>Sai</button></div>)}</div>}
       {q.section==="SHORT"&&<input className="short-input" placeholder="Nhập đáp án..." value={answers[q.id]??""} onChange={e=>setAnswers((a:any)=>({...a,[q.id]:e.target.value}))}/>}
       {q.section==="ESSAY"&&<textarea className="essay-input" placeholder="Trình bày bài làm..." value={answers[q.id]??""} onChange={e=>setAnswers((a:any)=>({...a,[q.id]:e.target.value}))}/>}
       <div className="nav-actions"><button onClick={()=>setCurrent(Math.max(0,current-1))} disabled={current===0}>← Câu trước</button><span>{current<exam.length-1?"Có thể quay lại sửa bài trước khi nộp":"Đã đến câu cuối"}</span>{current<exam.length-1?<button className="primary-btn" onClick={()=>setCurrent(current+1)}>Câu tiếp →</button>:<button className="submit-btn" onClick={submitExam}>NỘP BÀI</button>}</div>
