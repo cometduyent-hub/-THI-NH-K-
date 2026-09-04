@@ -132,7 +132,6 @@ export default function PhysicsArena() {
   const [essayScores, setEssayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
 
-  // Đồng bộ đề từ Supabase nếu có query ?exam=...
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const examId = params.get("exam");
@@ -479,13 +478,22 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  useMemo(() => { 
+  // ĐÃ SỬA THÀNH useEffect ĐỂ ĐỒNG HỒ CHẠY ỔN ĐỊNH TRÊN VERCEL
+  useEffect(() => { 
     if (!started || submitted) return; 
-    const t = setInterval(() => setSeconds((s: number) => Math.max(0, s - 1)), 1000); 
+    const t = setInterval(() => {
+      setSeconds((s: number) => {
+        if (s <= 1) {
+          clearInterval(t);
+          submitExam();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000); 
     return () => clearInterval(t); 
   }, [started, submitted, setSeconds]);
 
-  // Hàm hỗ trợ chèn ký hiệu khoa học trực tiếp vào văn bản học sinh đang gõ (Unicode thuần túy như Word)
   const insertSymbol = (symbol: string) => {
     const activeEl = document.getElementById("student-essay-textarea") as HTMLTextAreaElement;
     if (!activeEl) return;
@@ -589,14 +597,12 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
           <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "5px" }}>{sectionLabel[q.section]} · Câu {current + 1}</div>
           <h2 style={{ fontSize: "16px", color: "#1e293b", marginBottom: "15px" }}>{q.content}</h2>
 
-          {/* Phần hiển thị Video nếu có */}
           {q.videoUrl && (
             <div style={{ marginBottom: "15px" }}>
               <iframe width="100%" height="250" src={q.videoUrl.replace("watch?v=", "embed/")} title="Video minh họa" style={{ border: "0", borderRadius: "6px" }} allowFullScreen />
             </div>
           )}
 
-          {/* Phần hiển thị Âm thanh nếu có */}
           {q.audioUrl && (
             <div style={{ marginBottom: "15px", background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
               <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "5px" }}>🔊 Nghe âm thanh câu hỏi:</div>
@@ -617,7 +623,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
 
           {q.section === "ESSAY" && (
             <div>
-              {/* Bảng công thức & ký tự nhanh định dạng chuẩn Unicode thông dụng (Không dùng Latex) */}
               <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "8px", background: "#f1f5f9", padding: "6px", borderRadius: "6px" }}>
                 <span style={{ fontSize: "12px", fontWeight: "bold", alignSelf: "center", marginRight: "5px" }}>Ký hiệu nhanh:</span>
                 {["/ (Phân số)", "· (Nhân)", "² (Bình phương)", "³ (Lập phương)", "√ (Căn)", "→ (Suy ra)", "°C (Độ C)", "Δ (Delta)", "α", "β", "λ"].map(sym => (
@@ -642,7 +647,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
                 style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", fontFamily: "inherit" }}
               />
 
-              {/* Khu vực Ghi âm câu trả lời lý thuyết */}
               <div style={{ marginTop: "12px", background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "10px" }}>
                 {!recording ? (
                   <button type="button" onClick={startRecording} style={{ background: "#dc2626", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>🔴 Ghi âm câu trả lời</button>
