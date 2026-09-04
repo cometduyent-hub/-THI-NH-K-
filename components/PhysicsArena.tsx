@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { ChangeEvent, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
@@ -398,9 +398,11 @@ export default function PhysicsArena() {
                         <h3 style={{ color: "#1e293b", fontSize: "15px", marginBottom: "6px" }}>{q.id} · Tự luận · {q.points || 1} điểm</h3>
                         <p style={{ fontWeight: "500", color: "#334155", marginBottom: "8px" }}>{q.content}</p>
                         <div className="student-answer" style={{ background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", marginBottom: "10px" }}>
-                          <p style={{ margin: "0 0 6px 0", fontSize: "14px" }}><b>Bài làm của học sinh:</b> {typeof studentAnswer === 'object' ? studentAnswer?.text : (studentAnswer || "Chưa làm")}</p>
+                          <p style={{ margin: "0 0 6px 0", fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>
+                            Bài làm của học sinh: <span style={{ color: "#1e293b", fontWeight: "bold" }}>{typeof studentAnswer === 'object' ? studentAnswer?.text : (studentAnswer || "Chưa làm")}</span>
+                          </p>
                           {typeof studentAnswer === 'object' && studentAnswer?.file && (
-                            <p style={{ fontSize: "13px", color: "#2563eb", margin: 0 }}>📁 File đính kèm: {studentAnswer.file}</p>
+                            <p style={{ fontSize: "13px", color: "#2563eb", margin: 0, fontWeight: "500" }}>📁 File đính kèm: {studentAnswer.file}</p>
                           )}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -445,13 +447,18 @@ export default function PhysicsArena() {
                 </div>
 
                 <div className="metrics">
+                  <div className="metric"><b>{studentName || "Chưa rõ"}</b><span>Học sinh</span></div>
                   <div className="metric"><b>{exam.length}</b><span>Số câu</span></div>
-                  <div className="metric"><b>{autoScore.toFixed(2)}</b><span>Điểm tự động</span></div>
-                  <div className="metric"><b>{finalScore.toFixed(2)}</b><span>Điểm hiện tại</span></div>
+                  <div className="metric"><b>{finalScore.toFixed(2)}</b><span>Tổng điểm</span></div>
                 </div>
 
                 <div className="stat-card" style={{ marginTop: "20px", background: "#fff", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <h3 style={{ marginBottom: "10px", color: "#1e293b" }}>Chi tiết bài làm & Đáp án tự luận của học sinh</h3>
+                  <div style={{ marginBottom: "15px", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px" }}>
+                    <h3 style={{ margin: "0 0 5px 0", color: "#1e293b" }}>Thông tin học sinh</h3>
+                    <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}><b>Họ và tên / Thông tin:</b> {studentName || "Chưa cập nhật"}</p>
+                  </div>
+
+                  <h3 style={{ marginBottom: "10px", color: "#1e293b" }}>Chi tiết bài làm & Đáp án của học sinh</h3>
                   <div className="table-wrap">
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
                       <thead>
@@ -474,11 +481,11 @@ export default function PhysicsArena() {
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1" }}>
                                 {isEssay ? (
                                   <div>
-                                    <div><b>Tự luận:</b> {typeof ans === 'object' ? ans?.text : (ans || "Chưa làm")}</div>
-                                    {typeof ans === 'object' && ans?.file && <div style={{ color: "#2563eb", fontSize: "12px" }}>File: {ans.file}</div>}
+                                    <div style={{ fontWeight: "600", color: "#0f172a" }}><b>Tự luận:</b> {typeof ans === 'object' ? ans?.text : (ans || "Chưa làm")}</div>
+                                    {typeof ans === 'object' && ans?.file && <div style={{ color: "#2563eb", fontSize: "12px", fontWeight: "500" }}>File: {ans.file}</div>}
                                   </div>
                                 ) : (
-                                  <span>{String(ans || "Chưa chọn")}</span>
+                                  <span style={{ fontWeight: "600", color: "#0f172a" }}>{String(ans || "Chưa chọn")}</span>
                                 )}
                               </td>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "center", fontWeight: "bold" }}>
@@ -536,7 +543,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
           if (!studentName.trim()) { alert("Vui lòng nhập họ tên!"); return; }
           const cls = (document.getElementById("student-class-input") as HTMLInputElement)?.value || "";
           const sch = (document.getElementById("student-school-input") as HTMLInputElement)?.value || "";
-          if (cls || sch) setStudentName(`${studentName} (Lớp: ${cls} - Trường: ${sch})`);
+          if (cls || sch) setStudentName(`${studentName} - Lớp: ${cls} - Trường: ${sch}`);
           setStarted(true);
         }}>🚀 Bắt đầu làm bài</button>
       </div>
