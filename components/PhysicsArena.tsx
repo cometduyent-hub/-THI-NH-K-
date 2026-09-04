@@ -290,8 +290,32 @@ export default function PhysicsArena() {
         </div>}
 
         {tab==="matrix" && <div className="panel">
-          <div className="panel-head"><div><h1>🧩 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu theo từng phần và mức độ.</p></div><button className="primary-btn" onClick={generateExam}>🎲 Tạo đề ngẫu nhiên</button></div>
-          <div className="matrix-table"><div className="matrix-row header"><span>Phần</span><span>Nhận biết</span><span>Thông hiểu</span><span>Vận dụng</span><span>Vận dụng cao</span></div>
+  <div className="panel-head" style={{flexWrap: "wrap", gap: "10px"}}>
+    <div><h1>🌿 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu theo từng phần và mức độ, hoặc tải lên file ma trận tùy chỉnh.</p></div>
+    <div style={{display: "flex", gap: "8px", alignItems: "center"}}>
+      <label className="secondary-btn" style={{cursor: "pointer", background: "#f1f5f9", padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px"}}>
+        📁 Tải lên mẫu ma trận (JSON)
+        <input type="file" accept=".json" style={{display: "none"}} onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const customMatrix = JSON.parse(String(event.target?.result));
+              if (customMatrix) {
+                setMatrix(customMatrix);
+                alert("Đã tải lên và áp dụng mẫu ma trận tùy chỉnh thành công!");
+              }
+            } catch (err) {
+              alert("Lỗi đọc file ma trận! Vui lòng kiểm tra lại định dạng JSON.");
+            }
+          };
+          reader.readAsText(file);
+        }} />
+      </label>
+      <button className="primary-btn" onClick={generateExam}>Tạo đề thi</button>
+    </div>
+  </div>
           {(Object.keys(matrix) as Section[]).map(sec=><div className="matrix-row" key={sec}><strong>{sectionLabel[sec]}</strong>{(["NB","TH","VD","VDC"] as Difficulty[]).map(d=><input key={d} type="number" min="0" value={matrix[sec][d]} onChange={e=>updateMatrix(sec,d,Number(e.target.value))}/>)}</div>)}</div>
           <div className="rule-card"><h3>⚡ Quy tắc chấm Đúng/Sai</h3><div className="score-rules"><span>0 sai → <b>100%</b></span><span>1 sai → <b>50%</b></span><span>2 sai → <b>25%</b></span><span>3 sai → <b>10%</b></span><span>4 sai → <b>0%</b></span></div></div>
           <div className="settings-grid"><label>Thời gian (phút)<input type="number" min="1" value={minutes} onChange={e=>setMinutes(Number(e.target.value))}/></label><label>Lớp<select defaultValue="8"><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label><label>Tên bài kiểm tra<input defaultValue="Kiểm tra Vật lí"/></label></div>
