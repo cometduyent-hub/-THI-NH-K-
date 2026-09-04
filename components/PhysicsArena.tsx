@@ -1,7 +1,12 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 type Section = "MCQ" | "TF" | "SHORT" | "ESSAY";
 type Difficulty = "NB" | "TH" | "VD" | "VDC";
@@ -130,6 +135,31 @@ export default function PhysicsArena() {
   const [essayScores, setEssayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
 
+  // Tự động tải đề từ Supabase nếu URL có chứa tham số ?exam=...
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const examId = params.get("exam");
+    
+    if (examId) {
+      setMode("student");
+      async function fetchExamFromCloud() {
+        const { data, error } = await supabase
+          .from('exams')
+          .select('questions_data')
+          .eq('id', examId)
+          .single();
+          
+        if (data && data.questions_data) {
+          setExam(data.questions_data);
+          setNotice(`Đã tải thành công đề thi (${examId}) cho học sinh.`);
+        } else {
+          alert("Không tìm thấy mã đề thi này hoặc link không hợp lệ!");
+        }
+      }
+      fetchExamFromCloud();
+    }
+  }, []);
+
   const autoScore = useMemo(() => exam.reduce((s, q) => {
     const a = answers[q.id];
     if (q.section === "MCQ") return s + (a === q.correctOption ? q.points : 0);
@@ -165,6 +195,30 @@ export default function PhysicsArena() {
     setNotice(`Đã tạo đề ${randomized.length} câu từ ngân hàng.`);
   }
 
+  async function handlePublishAndGetLink() {
+    if (exam.length === 0) {
+      alert("Chưa có đề thi nào được tạo! Thầy hãy bấm 'Tạo đề thi' trước.");
+      return;
+    }
+
+    const examCode = "EXAM_" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const { error } = await supabase
+      .from('exams')
+      .insert([{ 
+        id: examCode, 
+        title: "Kiểm tra KHTN", 
+        questions_data: exam
+      }]);
+
+    if (error) {
+      alert("Lỗi khi lưu đề lên hệ thống: " + error.message);
+    } else {
+      const shareLink = `${window.location.origin}/?exam=${examCode}`;
+      prompt("Đã xuất link thành công! Thầy hãy copy đường link sau gửi cho học sinh:", shareLink);
+    }
+  }
+
   function updateMatrix(sec: Section, d: Difficulty, value: number) {
     setMatrix(m => ({ ...m, [sec]: { ...m[sec], [d]: Math.max(0, Math.floor(value || 0)) } }));
   }
@@ -193,7 +247,7 @@ export default function PhysicsArena() {
     const file = e.target.files?.[0]; if (!file) return;
     const url = URL.createObjectURL(file);
     setImagePreview(url);
-    setNotice("Đã nạp ảnh xem trước. Khi kết nối Storage Supabase, ảnh có thể được lưu dùng chung.");
+    setNotice("Đã nạp ảnh xem trước.");
   }
 
   function submitExam() {
@@ -281,7 +335,7 @@ export default function PhysicsArena() {
                   <div className="metric"><b>{questions.filter(q => q.section === "SHORT").length}</b><span>Trả lời ngắn</span></div>
                   <div className="metric"><b>{questions.filter(q => q.section === "ESSAY").length}</b><span>Tự luận</span></div>
                 </div>
-                <div className="toolbar"><span>Định dạng hỗ trợ: XLSX - CSV - JSON</span><a href="/question-bank-template.csv" download>Tải file mẫu</a></div>
+                <div className="toolbar"><span>Định dạng hỗ trợ: XLSX - CSV - JSON</span></div>
                 <div className="table-wrap">
                   <table>
                     <thead><tr><th>ID</th><th>Phần</th><th>Chủ đề</th><th>Mức độ</th><th>Nội dung</th><th>Điểm</th><th>Hành động</th></tr></thead>
@@ -302,65 +356,16 @@ export default function PhysicsArena() {
                     </tbody>
                   </table>
                 </div>
-                <div className="upload-box">
-                  <div><b>🖼 Hình ảnh câu hỏi</b><p>Nạp ảnh để xem trước trong trình soạn đề.</p></div>
-                  <label className="secondary-btn">Chọn ảnh<input hidden type="file" accept="image/*" onChange={uploadImage} /></label>
-                  {imagePreview && <img src={imagePreview} alt="preview" />}
-                </div>
               </div>
             )}
 
             {tab === "matrix" && (
               <div className="panel">
                 <div className="panel-head" style={{ flexWrap: "wrap", gap: "10px" }}>
-                  <div><h1>🌿 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu, tải lên hoặc lưu trữ ma trận và đề thi.</p></div>
+                  <div><h1>🌿 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu và xuất link gửi học sinh.</p></div>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                    <label className="secondary-btn" style={{ cursor: "pointer", background: "#f1f5f9", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}>
-                      📁 Tải lên ma trận
-                      <input type="file" accept=".json" style={{ display: "none" }} onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          try {
-                            const customMatrix = JSON.parse(String(event.target?.result));
-                            if (customMatrix) {
-                              setMatrix(customMatrix);
-                              alert("Đã áp dụng mẫu ma trận tùy chỉnh thành công!");
-                            }
-                          } catch (err) {
-                            alert("Lỗi đọc file ma trận!");
-                          }
-                        };
-                        reader.readAsText(file);
-                      }} />
-                    </label>
-
-                    <button className="secondary-btn" style={{ cursor: "pointer", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }} onClick={() => {
-                      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(matrix, null, 2));
-                      const downloadAnchor = document.createElement('a');
-                      downloadAnchor.setAttribute("href", dataStr);
-                      downloadAnchor.setAttribute("download", "ma_tran_de_thi.json");
-                      document.body.appendChild(downloadAnchor);
-                      downloadAnchor.click();
-                      downloadAnchor.remove();
-                    }}>💾 Lưu ma trận</button>
-
-                    <button className="secondary-btn" style={{ cursor: "pointer", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }} onClick={() => {
-                      if (exam.length === 0) {
-                        alert("Chưa có đề thi nào được tạo để lưu! Thầy hãy bấm 'Tạo đề thi' trước.");
-                        return;
-                      }
-                      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exam, null, 2));
-                      const downloadAnchor = document.createElement('a');
-                      downloadAnchor.setAttribute("href", dataStr);
-                      downloadAnchor.setAttribute("download", "de_thi_khoa_hoc_tu_nhien.json");
-                      document.body.appendChild(downloadAnchor);
-                      downloadAnchor.click();
-                      downloadAnchor.remove();
-                    }}>💾 Lưu đề thi</button>
-
                     <button className="primary-btn" onClick={generateExam}>Tạo đề thi</button>
+                    <button className="primary-btn" style={{ background: "#16a34a", color: "#fff", cursor: "pointer", border: "none" }} onClick={handlePublishAndGetLink}>🔗 Xuất link gửi học sinh</button>
                   </div>
                 </div>
                 {(Object.keys(matrix) as Section[]).map(sec => (
@@ -372,18 +377,13 @@ export default function PhysicsArena() {
                   </div>
                 ))}
                 <div className="rule-card"><h3>⚡ Quy tắc chấm Đúng/Sai</h3><div className="score-rules"><span>0 sai → <b>100%</b></span><span>1 sai → <b>50%</b></span><span>2 sai → <b>25%</b></span><span>3 sai → <b>10%</b></span><span>4 sai → <b>0%</b></span></div></div>
-                <div className="settings-grid">
-                  <label>Thời gian (phút)<input type="number" min="1" value={minutes} onChange={e => setMinutes(Number(e.target.value))} /></label>
-                  <label>Lớp<select defaultValue="8"><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label>
-                  <label>Tên bài kiểm tra<input defaultValue="Kiểm tra Vật lí" /></label>
-                </div>
               </div>
             )}
 
             {tab === "exam" && (
               <div className="panel">
                 <div className="panel-head"><div><h1>📝 Đề hiện tại</h1><p>{exam.length} câu · xáo câu và xáo đáp án.</p></div><button className="secondary-btn" onClick={generateExam}>🔄 Tạo lại</button></div>
-                {exam.length === 0 ? <div className="empty">Chưa có đề. Vào Ma trận & tạo đề để sinh đề.</div> : <div className="question-list">{exam.map((q, i) => <div className="teacher-q" key={q.id}><div className="q-num">Câu {i + 1}</div><div><span className="badge">{q.section}</span> <span className="badge">{diffLabel[q.difficulty]}</span><p>{q.content}</p>{q.imageUrl && <img src={q.imageUrl} alt="question" />}</div></div>)}</div>}
+                {exam.length === 0 ? <div className="empty">Chưa có đề. Vào Ma trận & tạo đề để sinh đề.</div> : <div className="question-list">{exam.map((q, i) => <div className="teacher-q" key={q.id}><div className="q-num">Câu {i + 1}</div><div><span className="badge">{q.section}</span> <span className="badge">{diffLabel[q.difficulty]}</span><p>{q.content}</p></div></div>)}</div>}
               </div>
             )}
 
@@ -406,9 +406,6 @@ export default function PhysicsArena() {
                           <p style={{ margin: "0 0 6px 0", fontSize: "14px", color: "#0f172a", fontWeight: "600" }}>
                             Bài làm của học sinh: <span style={{ color: "#1e293b", fontWeight: "bold" }}>{typeof studentAnswer === 'object' ? studentAnswer?.text : (studentAnswer || "Chưa làm")}</span>
                           </p>
-                          {typeof studentAnswer === 'object' && studentAnswer?.file && (
-                            <p style={{ fontSize: "13px", color: "#2563eb", margin: 0, fontWeight: "500" }}>📁 File đính kèm: {studentAnswer.file}</p>
-                          )}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <label style={{ fontSize: "13px", fontWeight: "600", color: "#475569" }}>Nhập điểm:</label>
@@ -459,11 +456,6 @@ export default function PhysicsArena() {
                 </div>
 
                 <div className="stat-card" style={{ marginTop: "20px", background: "#fff", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <div style={{ marginBottom: "15px", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px" }}>
-                    <h3 style={{ margin: "0 0 5px 0", color: "#1e293b" }}>Thông tin học sinh</h3>
-                    <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}><b>Họ và tên / Thông tin:</b> {studentName || "Chưa cập nhật"}</p>
-                  </div>
-
                   <h3 style={{ marginBottom: "10px", color: "#1e293b" }}>Chi tiết bài làm, Đáp án đúng & Đối chiếu</h3>
                   <div className="table-wrap">
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
@@ -483,36 +475,22 @@ export default function PhysicsArena() {
                           const essayScore = essayScores[q.id] || 0;
                           
                           let correctText = "";
-                          if (q.section === "MCQ") {
-                            correctText = q.correctOption || "";
-                          } else if (q.section === "TF") {
-                            correctText = q.tf ? q.tf.map((v, i) => `${['a','b','c','d'][i]}: ${v ? 'Đúng' : 'Sai'}`).join(", ") : "";
-                          } else if (q.section === "SHORT") {
-                            correctText = q.shortAnswer || "";
-                          } else {
-                            correctText = "(Chấm tự luận)";
-                          }
+                          if (q.section === "MCQ") correctText = q.correctOption || "";
+                          else if (q.section === "TF") correctText = q.tf ? q.tf.map((v, i) => `${['a','b','c','d'][i]}: ${v ? 'Đúng' : 'Sai'}`).join(", ") : "";
+                          else if (q.section === "SHORT") correctText = q.shortAnswer || "";
+                          else correctText = "(Chấm tự luận)";
 
                           let studentAnsText = "";
-                          if (isEssay) {
-                            studentAnsText = typeof ans === 'object' ? (ans?.text || "Chưa làm") : (ans || "Chưa làm");
-                          } else if (q.section === "TF") {
-                            studentAnsText = Array.isArray(ans) ? ans.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
-                          } else {
-                            studentAnsText = String(ans || "Chưa chọn");
-                          }
+                          if (isEssay) studentAnsText = typeof ans === 'object' ? (ans?.text || "Chưa làm") : (ans || "Chưa làm");
+                          else if (q.section === "TF") studentAnsText = Array.isArray(ans) ? ans.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
+                          else studentAnsText = String(ans || "Chưa chọn");
 
                           return (
                             <tr key={q.id || idx}>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1", fontWeight: "bold" }}>{q.id} ({q.section})</td>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1" }}>{q.content}</td>
-                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", fontWeight: "600", color: "#0f172a" }}>
-                                {studentAnsText}
-                                {typeof ans === 'object' && ans?.file && <div style={{ color: "#2563eb", fontSize: "12px", fontWeight: "500" }}>File: {ans.file}</div>}
-                              </td>
-                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", color: "#16a34a", fontWeight: "600" }}>
-                                {correctText}
-                              </td>
+                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", fontWeight: "600", color: "#0f172a" }}>{studentAnsText}</td>
+                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", color: "#16a34a", fontWeight: "600" }}>{correctText}</td>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "center", fontWeight: "bold" }}>
                                 {isEssay ? `${essayScore} đ` : (q.section === "MCQ" ? (ans === q.correctOption ? `${q.points} đ` : "0 đ") : (q.section === "SHORT" ? ((Math.abs(Number(ans) - Number(q.shortAnswer)) <= Number(q.tolerance || 0)) ? `${q.points} đ` : "0 đ") : `${scoreTF(ans, q.tf, q.points).toFixed(2)} đ`))}
                               </td>
@@ -550,7 +528,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
     <div className="student-start" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", padding: "20px", textAlign: "center" }}>
       <div className="glow-orb" style={{ fontSize: "48px", marginBottom: "15px" }}>⚛️</div>
       <h1 style={{ fontSize: "28px", color: "#1e293b", marginBottom: "10px" }}>CHINH PHỤC KHTN CÙNG THẦY TUẤN</h1>
-      <p style={{ color: "#64748b", marginBottom: "25px", maxWidth: "500px" }}>Phòng kiểm tra trực tuyến tích hợp KaTeX và chấm bài tự động.</p>
+      <p style={{ color: "#64748b", marginBottom: "25px", maxWidth: "500px" }}>Phòng kiểm tra trực tuyến tích hợp chấm bài tự động.</p>
       <div style={{ background: "#fff", padding: "25px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", width: "100%", maxWidth: "400px", display: "flex", flexDirection: "column", gap: "15px", textAlign: "left" }}>
         <div>
           <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "5px" }}>Họ và tên học sinh:</label>
@@ -575,7 +553,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
     </div>
   );
 
-  if (!exam.length) return <div className="student-start"><h1>Chưa có đề thi</h1><p>Giáo viên cần tạo đề trước.</p></div>;
+  if (!exam.length) return <div className="student-start"><h1>Chưa có đề thi</h1><p>Đang tải đề hoặc giáo viên chưa tạo đề.</p></div>;
   
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0"), ss = String(seconds % 60).padStart(2, "0");
   const essayTot = Object.values(essayScores).reduce((a, b) => a + b, 0);
@@ -614,13 +592,9 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
             else correctDesc = "(Chấm tự luận bởi GV)";
 
             let studentDesc = "";
-            if (item.section === "ESSAY") {
-              studentDesc = typeof studentAns === 'object' ? (studentAns?.text || "Chưa làm") : (studentAns || "Chưa làm");
-            } else if (item.section === "TF") {
-              studentDesc = Array.isArray(studentAns) ? studentAns.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
-            } else {
-              studentDesc = String(studentAns || "Chưa chọn");
-            }
+            if (item.section === "ESSAY") studentDesc = typeof studentAns === 'object' ? (studentAns?.text || "Chưa làm") : (studentAns || "Chưa làm");
+            else if (item.section === "TF") studentDesc = Array.isArray(studentAns) ? studentAns.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
+            else studentDesc = String(studentAns || "Chưa chọn");
 
             return (
               <div key={item.id} style={{ border: "1px solid #e2e8f0", padding: "12px", borderRadius: "8px", background: "#fdfdfd" }}>
@@ -630,7 +604,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
                   <div style={{ background: "#f1f5f9", padding: "8px", borderRadius: "6px" }}>
                     <span style={{ color: "#475569", display: "block", fontSize: "12px", fontWeight: "bold" }}>Lựa chọn của bạn:</span>
                     <span style={{ color: "#0f172a", fontWeight: "600" }}>{studentDesc}</span>
-                    {typeof studentAns === 'object' && studentAns?.file && <div style={{ color: "#2563eb", fontSize: "12px" }}>File: {studentAns.file}</div>}
                   </div>
                   <div style={{ background: "#f0fdf4", padding: "8px", borderRadius: "6px", border: "1px solid #bbf7d0" }}>
                     <span style={{ color: "#16a34a", display: "block", fontSize: "12px", fontWeight: "bold" }}>Đáp án đúng:</span>
@@ -668,7 +641,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
         <article className="question-card">
           <div className="question-meta"><span className="badge">{sectionLabel[q.section]}</span><span>Câu {current + 1}/{exam.length}</span></div>
           <h2>{q.content}</h2>
-          {q.imageUrl && <img className="question-img" src={q.imageUrl} alt="minh họa" />}
           
           {q.section === "MCQ" && q.options?.map(o => (
             <label className={`option ${answers[q.id] === o.key ? "selected" : ""}`} key={o.key}>
@@ -681,7 +653,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
             <div className="tf-grid">
               {["a", "b", "c", "d"].map((x, i) => (
                 <div className="tf-row" key={x}>
-                  <span><b>{x})</b> {q.options?.[i]?.text || q.tfOptions?.[i]?.text || `Nhận định ${x.toUpperCase()} của câu hỏi`}</span>
+                  <span><b>{x})</b> {q.options?.[i]?.text || q.tfOptions?.[i]?.text || `Nhận định ${x.toUpperCase()}`}</span>
                   <button className={answers[q.id]?.[i] === true ? "selected" : ""} onClick={() => setAnswers((a: any) => ({ ...a, [q.id]: [...(a[q.id] || [undefined, undefined, undefined, undefined]).slice(0, i), true, ...(a[q.id] || []).slice(i + 1)] }))}>Đúng</button>
                   <button className={answers[q.id]?.[i] === false ? "selected" : ""} onClick={() => setAnswers((a: any) => ({ ...a, [q.id]: [...(a[q.id] || [undefined, undefined, undefined, undefined]).slice(0, i), false, ...(a[q.id] || []).slice(i + 1)] }))}>Sai</button>
                 </div>
@@ -695,50 +667,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
           
           {q.section === "ESSAY" && (
             <div className="essay-container">
-              <div style={{ display: "flex", gap: "5px", marginBottom: "6px", flexWrap: "wrap", background: "#f8fafc", padding: "6px", border: "1px solid #e2e8f0", borderRadius: "4px" }}>
-                <span style={{ fontSize: "12px", fontWeight: "bold", color: "#64748b", alignSelf: "center", marginRight: "5px" }}>Chèn nhanh:</span>
-                {[
-                  { label: "x²", insert: "^{2}" },
-                  { label: "x₁", insert: "_{1}" },
-                  { label: "a/b", insert: "\\frac{a}{b}" },
-                  { label: "√x", insert: "\\sqrt{x}" },
-                  { label: "α", insert: "\\alpha" },
-                  { label: "β", insert: "\\beta" },
-                  { label: "Δ", insert: "\\Delta" },
-                  { label: "°C", insert: "^\\circ\\text{C}" },
-                  { label: "Ω", insert: "\\Omega" },
-                ].map((btn, idx) => (
-                  <button 
-                    key={idx}
-                    type="button"
-                    style={{ padding: "2px 8px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: "3px", cursor: "pointer", fontSize: "13px" }}
-                    onClick={() => {
-                      const textarea = document.getElementById(`essay-textarea-${q.id}`) as HTMLTextAreaElement;
-                      if (textarea) {
-                        const start = textarea.selectionStart;
-                        const end = textarea.selectionEnd;
-                        const val = textarea.value;
-                        const newVal = val.substring(0, start) + btn.insert + val.substring(end);
-                        
-                        setAnswers((prev: any) => ({
-                          ...prev,
-                          [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
-                            ? { ...prev[q.id], text: newVal } 
-                            : { text: newVal, file: null }
-                        }));
-                        setTimeout(() => {
-                          textarea.focus();
-                          textarea.setSelectionRange(start + btn.insert.length, start + btn.insert.length);
-                        }, 0);
-                      }
-                    }}
-                  >
-                    {btn.label}
-                  </button>
-                ))}
-              </div>
               <textarea 
-                id={`essay-textarea-${q.id}`}
                 className="essay-input"
                 rows={6}
                 placeholder="Nhập bài làm tự luận chi tiết..."
@@ -754,25 +683,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
                 }}
                 style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", fontFamily: "inherit" }}
               />
-              <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <label className="secondary-btn" style={{ cursor: "pointer", fontSize: "13px", padding: "6px 12px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "4px" }}>
-                  📁 Tải file/ảnh bài làm lên
-                  <input type="file" style={{ display: "none" }} onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setAnswers((prev: any) => ({
-                        ...prev,
-                        [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
-                          ? { ...prev[q.id], file: file.name } 
-                          : { text: "", file: file.name }
-                      }));
-                    }
-                  }} />
-                </label>
-                {typeof answers[q.id] === 'object' && answers[q.id]?.file && (
-                  <span style={{ fontSize: "13px", color: "#2563eb" }}>Đã đính kèm: {answers[q.id].file}</span>
-                )}
-              </div>
             </div>
           )}
 
