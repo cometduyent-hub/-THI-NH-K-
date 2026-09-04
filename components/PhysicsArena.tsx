@@ -253,15 +253,39 @@ export default function PhysicsArena() {
 
       <div className="content">
         {tab==="bank" && <div className="panel">
-          <div className="panel-head"><div><h1>📚 Ngân hàng câu hỏi</h1><p>Quản lý câu hỏi theo lớp, chủ đề và mức độ.</p></div>
-          <label className="primary-btn">⬆ Cập nhật ngân hàng
-            <input hidden type="file" accept=".xlsx,.csv,.json" onChange={importFile}/>
-          </label></div>
-          <div className="metrics"><Metric n={questions.length} t="Tổng câu"/><Metric n={questions.filter(q=>q.section==="MCQ").length} t="Nhiều lựa chọn"/><Metric n={questions.filter(q=>q.section==="TF").length} t="Đúng/Sai"/><Metric n={questions.filter(q=>q.section==="SHORT").length} t="Trả lời ngắn"/></div>
-          <div className="toolbar"><span>Định dạng hỗ trợ: XLSX · CSV · JSON</span><a href="/question-bank-template.csv" download>Tải file mẫu</a></div>
-          <div className="table-wrap"><table><thead><tr><th>Mã</th><th>Phần</th><th>Chủ đề</th><th>Mức độ</th><th>Nội dung</th><th>Điểm</th></tr></thead><tbody>
-            {questions.map(q=><tr key={q.id}><td><b>{q.id}</b></td><td><Badge>{q.section}</Badge></td><td>{q.topic}</td><td>{diffLabel[q.difficulty]}</td><td>{q.content}</td><td>{q.points}</td></tr>)}
-          </tbody></table></div>
+  <div className="panel-head">
+    <div><h1>Ngân hàng câu hỏi</h1><p>Quản lý câu hỏi theo lớp, chủ đề và mức độ.</p></div>
+    <div style={{display: "flex", gap: "10px"}}>
+      <label className="primary-btn">📥 Cập nhật ngân hàng
+        <input hidden type="file" accept=".xlsx,.csv,.json" onChange={importFile}/>
+      </label>
+      <button className="secondary-btn" style={{cursor: "pointer", background: "#2563eb", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "600"}} onClick={() => {
+        const newQ: Question = {
+          id: "Q_" + Date.now(),
+          section: "MCQ",
+          subject: "Khoa học tự nhiên",
+          grade: "7",
+          topic: "Chủ đề mới",
+          difficulty: "TH",
+          content: "Nhập nội dung câu hỏi mới tại đây...",
+          options: [
+            {key: "A", text: "Đáp án A"},
+            {key: "B", text: "Đáp án B"},
+            {key: "C", text: "Đáp án C"},
+            {key: "D", text: "Đáp án D"}
+          ],
+          correctOption: "A",
+          points: 0.25
+        };
+        setQuestions(prev => [newQ, ...prev]);
+      }}>➕ Thêm câu mới</button>
+    </div>
+  </div>
+  <div className="metrics"><metric n={questions.length} t="Tổng câu"/><metric n={questions.filter(q=>q.section==="MCQ").length} t="Nhiều lựa chọn"/><metric n={questions.filter(q=>q.section==="TF").length} t="Đúng / Sai"/><metric n={questions.filter(q=>q.section==="SHORT").length} t="Trả lời ngắn"/><metric n={questions.filter(q=>q.section==="ESSAY").length} t="Tự luận"/></div>
+  <div className="toolbar"><span>Định dạng hỗ trợ: XLSX - CSV - JSON</span><a href="/question-bank-template.csv" download>Tải file mẫu</a></div>
+  <div className="table-wrap"><table><thead><tr><th>ID</th><th>Phần</th><th>Chủ đề</th><th>Mức độ</th><th>Nội dung</th><th>Điểm</th><th>Hành động</th></tr></thead><tbody>
+    {questions.map((q, index)=><tr key={q.id||index}><td><b>{q.id}</b></td><td><Badge>{sectionLabel[q.section]}</Badge></td><td>{q.topic}</td><td>{diffLabel[q.difficulty]}</td><td>{q.content}</td><td>{q.points}</td><td><button style={{background: "#fee2e2", color: "#991b1b", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "12px"}} onClick={()=>{if(confirm("Xóa câu hỏi này?")) setQuestions(prev=>prev.filter((_, i)=>i!==index))}}>🗑️ Xóa</button></td></tr>)}
+  </tbody></table></div>
           <div className="upload-box"><div><b>🖼 Hình ảnh câu hỏi</b><p>Nạp ảnh để xem trước trong trình soạn đề.</p></div><label className="secondary-btn">Chọn ảnh<input hidden type="file" accept="image/*" onChange={uploadImage}/></label>{imagePreview&&<img src={imagePreview} alt="preview"/>}</div>
         </div>}
 
