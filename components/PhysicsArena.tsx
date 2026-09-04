@@ -476,22 +476,30 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const audioChunksRef = useRef<Blob[]>(null as any);
 
-  // ĐÃ SỬA THÀNH useEffect ĐỂ ĐỒNG HỒ CHẠY ỔN ĐỊNH TRÊN VERCEL
-  useEffect(() => { 
-    if (!started || submitted) return; 
-    const t = setInterval(() => {
-      setSeconds((s: number) => {
-        if (s <= 1) {
-          clearInterval(t);
-          submitExam();
+  // Dùng useRef để lưu hàm submitExam tránh việc useEffect bị kích hoạt lại
+  const submitExamRef = useRef(submitExam);
+  useEffect(() => {
+    submitExamRef.current = submitExam;
+  }, [submitExam]);
+
+  // TIMER DÙNG useRef ĐẢM BẢO CHẠY ỔN ĐỊNH XUYÊN SUỐT KHÔNG BAO GIỜ BỊ RESET
+  useEffect(() => {
+    if (!started || submitted) return;
+
+    const timer = setInterval(() => {
+      setSeconds((prevSeconds: number) => {
+        if (prevSeconds <= 1) {
+          clearInterval(timer);
+          submitExamRef.current();
           return 0;
         }
-        return s - 1;
+        return prevSeconds - 1;
       });
-    }, 1000); 
-    return () => clearInterval(t); 
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [started, submitted, setSeconds]);
 
   const insertSymbol = (symbol: string) => {
@@ -633,7 +641,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
               <textarea 
                 id="student-essay-textarea"
                 rows={5}
-                placeholder="Nhập bài làm tự luận chi tiết (có thể dùng các ký hiệu nhanh ở trên hệt như trong Word)..."
+                placeholder="Nhập bài làm tự luận chi tiết..."
                 value={typeof answers[q.id] === 'object' ? (answers[q.id]?.text || "") : (answers[q.id] || "")}
                 onChange={e => {
                   const val = e.target.value;
