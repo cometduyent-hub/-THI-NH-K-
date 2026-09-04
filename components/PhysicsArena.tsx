@@ -390,11 +390,71 @@ export default function PhysicsArena() {
   );
 })}
 
-        {tab==="stats" && <div className="panel"><div className="panel-head"><div><h1>📊 Thống kê</h1><p>Phân tích nhanh kết quả bài kiểm tra.</p></div></div>
-          <div className="metrics"><Metric n={exam.length} t="Số câu"/><Metric n={autoScore.toFixed(2)} t="Điểm tự động"/><Metric n={finalScore.toFixed(2)} t="Điểm hiện tại"/><Metric n={submitted?"Đã nộp":"Chưa nộp"} t="Trạng thái"/></div>
-          <div className="stat-card"><h3>Phân tích theo phần</h3>{(["MCQ","TF","SHORT","ESSAY"] as Section[]).map(s=><div className="bar-row" key={s}><span>{sectionLabel[s]}</span><div><i style={{width:`${exam.filter(q=>q.section===s).length?Math.min(100,(exam.filter(q=>q.section===s).length/exam.length)*100):0}%`}}/></div></div>)}</div>
-        </div>}
-      </div>
+        {tab==="stats" && <div className="panel">
+  <div className="panel-head" style={{flexWrap: "wrap", gap: "10px"}}>
+    <div>
+      <h1>📊 Thống kê & Báo cáo kết quả</h1>
+      <p>Phân tích tổng quan và xuất toàn bộ bài làm của học sinh ra file PDF.</p>
+    </div>
+    <div>
+      <button 
+        className="primary-btn" 
+        style={{cursor: "pointer", background: "#0284c7", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "600"}}
+        onClick={() => { window.print(); }}
+      >
+        📥 Xuất báo cáo ra file PDF
+      </button>
+    </div>
+  </div>
+
+  <div className="metrics">
+    <metric n={exam.length} t="Số câu"/>
+    <metric n={autoscore.toFixed(2)} t="Điểm tự động"/>
+    <metric n={finalScore.toFixed(2)} t="Điểm hiện tại"/>
+  </div>
+
+  <div className="stat-card" style={{marginTop: "20px", background: "#fff", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0"}}>
+    <h3 style={{marginBottom: "10px", color: "#1e293b"}}>Chi tiết bài làm & Đáp án tự luận của học sinh</h3>
+    <div className="table-wrap">
+      <table style={{width: "100%", borderCollapse: "collapse", fontSize: "14px"}}>
+        <thead>
+          <tr style={{background: "#f1f5f9", textAlign: "left"}}>
+            <th style={{padding: "8px", border: "1px solid #cbd5e1"}}>Mã câu / Phần</th>
+            <th style={{padding: "8px", border: "1px solid #cbd5e1"}}>Nội dung câu hỏi</th>
+            <th style={{padding: "8px", border: "1px solid #cbd5e1"}}>Đáp án / Bài làm học sinh</th>
+            <th style={{padding: "8px", border: "1px solid #cbd5e1"}}>Điểm</th>
+          </tr>
+        </thead>
+        <tbody>
+          {exam.map((q, idx) => {
+            const ans = answers[q.id];
+            const isEssay = q.section === "ESSAY";
+            const essayScore = essayScores[q.id] || 0;
+            return (
+              <tr key={q.id || idx}>
+                <td style={{padding: "8px", border: "1px solid #cbd5e1", fontWeight: "bold"}}>{q.id} ({q.section})</td>
+                <td style={{padding: "8px", border: "1px solid #cbd5e1"}}>{q.content}</td>
+                <td style={{padding: "8px", border: "1px solid #cbd5e1"}}>
+                  {isEssay ? (
+                    <div>
+                      <div><b>Tự luận:</b> {typeof ans === 'object' ? ans?.text : (ans || "Chưa làm")}</div>
+                      {typeof ans === 'object' && ans?.file && <div style={{color: "#2563eb", fontSize: "12px"}}>File: {ans.file}</div>}
+                    </div>
+                  ) : (
+                    <span>{String(ans || "Chưa chọn")}</span>
+                  )}
+                </td>
+                <td style={{padding: "8px", border: "1px solid #cbd5e1", textAlign: "center", fontWeight: "bold"}}>
+                  {isEssay ? `${essayScore} đ` : "-"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>}
     </section> : <StudentView exam={exam} answers={answers} setAnswers={setAnswers} current={current} setCurrent={setCurrent} seconds={seconds} setSeconds={setSeconds} studentName={studentName} setStudentName={setStudentName} submitExam={submitExam} submitted={submitted} />}
 
     <footer>⚡ Physics Test Arena · Sẵn sàng triển khai GitHub → Vercel → Supabase</footer>
