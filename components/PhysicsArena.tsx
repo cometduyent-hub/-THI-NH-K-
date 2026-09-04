@@ -264,10 +264,40 @@ function StudentView({exam,answers,setAnswers,current,setCurrent,seconds,setSeco
       {q.section==="MCQ"&&q.options?.map(o=><label className={`option ${answers[q.id]===o.key?"selected":""}`} key={o.key}><input type="radio" name={q.id} checked={answers[q.id]===o.key} onChange={()=>setAnswers((a:any)=>({...a,[q.id]:o.key}))}/><b>{o.key}.</b>{o.text}</label>)}
      {q.section==="TF"&&<div className="tf-grid">{["a","b","c","d"].map((x,i)=><div className="tf-row" key={x}><span><b>{x})</b> {q.options?.[i]?.text || q.tfOptions?.[i]?.text || `Nhận định ${x.toUpperCase()} của câu hỏi`}</span><button className={answers[q.id]?.[i]===true?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),true,...(a[q.id]||[]).slice(i+1)]}))}>Đúng</button><button className={answers[q.id]?.[i]===false?"selected":""} onClick={()=>setAnswers((a:any)=>({...a,[q.id]:[...(a[q.id]||[undefined,undefined,undefined,undefined]).slice(0,i),false,...(a[q.id]||[]).slice(i+1)]}))}>Sai</button></div>)}</div>}
       {q.section==="SHORT"&&<input className="short-input" placeholder="Nhập đáp án..." value={answers[q.id]??""} onChange={e=>setAnswers((a:any)=>({...a,[q.id]:e.target.value}))}/>}
-      {q.section==="ESSAY"&&<textarea className="essay-input" placeholder="Trình bày bài làm..." value={answers[q.id]??""} onChange={e=>setAnswers((a:any)=>({...a,[q.id]:e.target.value}))}/>}
-      <div className="nav-actions"><button onClick={()=>setCurrent(Math.max(0,current-1))} disabled={current===0}>← Câu trước</button><span>{current<exam.length-1?"Có thể quay lại sửa bài trước khi nộp":"Đã đến câu cuối"}</span>{current<exam.length-1?<button className="primary-btn" onClick={()=>setCurrent(current+1)}>Câu tiếp →</button>:<button className="submit-btn" onClick={submitExam}>NỘP BÀI</button>}</div>
-    </article></div></div>;
-}
+      {q.section==="ESSAY" && (
+    <div className="essay-container">
+        <textarea 
+            className="essay-input" 
+            placeholder="Trình bày bài làm hoặc gõ công thức..." 
+            value={answers[q.id]?.text ?? answers[q.id] ?? ""} 
+            onChange={(e) => {
+                const val = e.target.value;
+                setAnswers((prev: any) => ({
+                    ...prev,
+                    [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
+                        ? { ...prev[q.id], text: val } 
+                        : { text: val, file: prev[q.id]?.file }
+                }));
+            }}
+        />
+        <div style={{marginTop: "8px", display: "flex", alignItems: "center", gap: "10px"}}>
+            <label className="secondary-btn" style={{cursor: "pointer", display: "inline-block", padding: "6px 12px", fontSize: "14px", border: "1px solid #ccc", borderRadius: "4px"}}>
+                📁 Tải file/ảnh bài làm lên <input type="file" style={{display: "none"}} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                        setAnswers((prev: any) => ({
+                            ...prev,
+                            [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
+                                ? { ...prev[q.id], file: file.name } 
+                                : { text: prev[q.id] || "", file: file.name }
+                        }));
+                    }
+                }} />
+            </label>
+            {answers[q.id]?.file && <span style={{fontSize: "13px", color: "#4ade80"}}>Đã đính kèm: {answers[q.id].file}</span>}
+        </div>
+    </div>
+)}
 
 function Metric({n,t}:{n:any,t:string}){return <div className="metric"><b>{n}</b><span>{t}</span></div>}
 function Badge({children}:{children:React.ReactNode}){return <span className="badge">{children}</span>}
