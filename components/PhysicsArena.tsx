@@ -358,8 +358,37 @@ export default function PhysicsArena() {
 
         {tab==="grading" && <div className="panel"><div className="panel-head"><div><h1>✍️ Chấm bài</h1><p>Điểm tự động + chấm tự luận thủ công.</p></div></div>
           {!exam.length?<Empty text="Chưa có bài thi."/>:<><div className="score-hero"><span>Điểm tự động <b>{autoScore.toFixed(2)}</b></span><span>Điểm tự luận <b>{Object.values(essayScores).reduce((a,b)=>a+b,0).toFixed(2)}</b></span><span>Tổng <b>{finalScore.toFixed(2)}</b></span></div>
-          {exam.filter(q=>q.section==="ESSAY").map(q=><div className="essay-card" key={q.id}><h3>{q.id} · Tự luận · {q.points} điểm</h3><p>{q.content}</p><div className="student-answer">{answers[q.id]||"Chưa có bài làm."}</div><label>Điểm giáo viên<input type="number" min="0" max={q.points} step=".1" value={essayScores[q.id]??0} onChange={e=>setEssayScores(s=>({...s,[q.id]:Number(e.target.value)}))}/></label></div>)}</>}
-        </div>}
+          {exam.filter(q=>q.section==="ESSAY").map(q=>{
+  const studentAnswer = answers[q.id];
+  return (
+    <div className="essay-card" key={q.id} style={{background: "#f8fafc", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "12px"}}>
+      <h3 style={{color: "#1e293b", fontSize: "15px", marginBottom: "6px"}}>{q.id} · Tự luận · {q.points || 1} điểm</h3>
+      <p style={{fontWeight: "500", color: "#334155", marginBottom: "8px"}}>{q.content}</p>
+      <div className="student-answer" style={{background: "#fff", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", marginBottom: "10px"}}>
+        <p style={{margin: "0 0 6px 0", fontSize: "14px"}}><b>Bài làm của học sinh:</b> {typeof studentAnswer === 'object' ? studentAnswer?.text : (studentAnswer || "Chưa làm")}</p>
+        {typeof studentAnswer === 'object' && studentAnswer?.file && (
+          <p style={{fontSize: "13px", color: "#2563eb", margin: 0}}>📁 File đính kèm: {studentAnswer.file}</p>
+        )}
+      </div>
+      <div style={{display: "flex", alignItems: "center", gap: "10px"}}>
+        <label style={{fontSize: "13px", fontWeight: "600", color: "#475569"}}>Nhập điểm:</label>
+        <input 
+          type="number" 
+          min="0" 
+          max={q.points || 1} 
+          step="0.25"
+          style={{width: "90px", padding: "6px 8px", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "14px"}}
+          placeholder="0.0"
+          value={essayScores[q.id] ?? ""}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value) || 0;
+            setEssayScores((prev: any) => ({ ...prev, [q.id]: val }));
+          }}
+        />
+      </div>
+    </div>
+  );
+})}
 
         {tab==="stats" && <div className="panel"><div className="panel-head"><div><h1>📊 Thống kê</h1><p>Phân tích nhanh kết quả bài kiểm tra.</p></div></div>
           <div className="metrics"><Metric n={exam.length} t="Số câu"/><Metric n={autoScore.toFixed(2)} t="Điểm tự động"/><Metric n={finalScore.toFixed(2)} t="Điểm hiện tại"/><Metric n={submitted?"Đã nộp":"Chưa nộp"} t="Trạng thái"/></div>
