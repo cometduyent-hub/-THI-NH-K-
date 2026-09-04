@@ -291,10 +291,12 @@ export default function PhysicsArena() {
 
         {tab==="matrix" && <div className="panel">
   <div className="panel-head" style={{flexWrap: "wrap", gap: "10px"}}>
-    <div><h1>🌿 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu theo từng phần và mức độ, hoặc tải lên file ma trận tùy chỉnh.</p></div>
-    <div style={{display: "flex", gap: "8px", alignItems: "center"}}>
-      <label className="secondary-btn" style={{cursor: "pointer", background: "#f1f5f9", padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px"}}>
-        📁 Tải lên mẫu ma trận (JSON)
+    <div><h1>🌿 Ma trận & tạo đề</h1><p>Thay đổi số lượng câu, tải lên hoặc lưu trữ ma trận và đề thi.</p></div>
+    <div style={{display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap"}}>
+      
+      {/* Nút Tải lên ma trận */}
+      <label className="secondary-btn" style={{cursor: "pointer", background: "#f1f5f9", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px"}}>
+        📁 Tải lên ma trận
         <input type="file" accept=".json" style={{display: "none"}} onChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
@@ -304,15 +306,43 @@ export default function PhysicsArena() {
               const customMatrix = JSON.parse(String(event.target?.result));
               if (customMatrix) {
                 setMatrix(customMatrix);
-                alert("Đã tải lên và áp dụng mẫu ma trận tùy chỉnh thành công!");
+                alert("Đã áp dụng mẫu ma trận tùy chỉnh thành công!");
               }
             } catch (err) {
-              alert("Lỗi đọc file ma trận! Vui lòng kiểm tra lại định dạng JSON.");
+              alert("Lỗi đọc file ma trận!");
             }
           };
           reader.readAsText(file);
         }} />
       </label>
+
+      {/* Nút Lưu ma trận hiện tại */}
+      <button className="secondary-btn" style={{cursor: "pointer", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px"}} onClick={() => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(matrix, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "ma_tran_de_thi.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      }}>💾 Lưu ma trận</button>
+
+      {/* Nút Lưu đề thi đã tạo */}
+      <button className="secondary-btn" style={{cursor: "pointer", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px"}} onClick={() => {
+        if (exam.length === 0) {
+          alert("Chưa có đề thi nào được tạo để lưu! Thầy hãy bấm 'Tạo đề thi' trước.");
+          return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exam, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "de_thi_khoa_hoc_tu_nhien.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      }}>💾 Lưu đề thi</button>
+
+      {/* Nút Tạo đề thi */}
       <button className="primary-btn" onClick={generateExam}>Tạo đề thi</button>
     </div>
   </div>
