@@ -56,7 +56,50 @@ function shuffle<T>(arr:T[]) {
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
+function shuffleExamSections(questionList: Question[]) {
+    const mcq = questionList.filter(q => q.section === "MCQ");
+    const tf = questionList.filter(q => q.section === "TF");
+    const short = questionList.filter(q => q.section === "SHORT");
+    const essay = questionList.filter(q => q.section === "ESSAY");
 
+    const shuffleArray = (arr: any[]) => {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
+    return [
+        ...shuffleArray(mcq).map(q => q.options ? {...q, options: shuffleArray(q.options)} : q),
+        ...shuffleArray(tf),
+        ...shuffleArray(short),
+        ...shuffleArray(essay)
+    ];
+}
+function shuffleExamSections(questionList: Question[]) {
+    const mcq = questionList.filter(q => q.section === "MCQ");
+    const tf = questionList.filter(q => q.section === "TF");
+    const short = questionList.filter(q => q.section === "SHORT");
+    const essay = questionList.filter(q => q.section === "ESSAY");
+
+    const shuffleArray = (arr: any[]) => {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
+    return [
+        ...shuffleArray(mcq),
+        ...shuffleArray(tf),
+        ...shuffleArray(short),
+        ...shuffleArray(essay)
+    ];
+}
 function scoreTF(answer:boolean[]|undefined, key:boolean[]|undefined, point:number) {
   if(!answer || !key) return 0;
   const wrong=answer.reduce((n,v,i)=>n+(v!==key[i]?1:0),0);
@@ -103,7 +146,7 @@ export default function PhysicsArena() {
   const [essayScores,setEssayScores]=useState<Record<string,number>>({});
   const [notice,setNotice]=useState("");
 
-  const totalPoints = useMemo(()=>exam.reduce((s,q)=>s+q.points,0),[exam]);
+ const randomized = shuffleExamSections(selected);
   const autoScore = useMemo(()=>exam.reduce((s,q)=>{
     const a=answers[q.id];
     if(q.section==="MCQ") return s+(a===q.correctOption?q.points:0);
