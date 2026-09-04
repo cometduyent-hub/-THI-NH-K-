@@ -142,7 +142,8 @@ export default function PhysicsArena() {
     return s;
   }, 0), [exam, answers]);
   
-  const finalScore = autoScore + Object.values(essayScores).reduce((a, b) => a + b, 0);
+  const essayTotalScore = Object.values(essayScores).reduce((a, b) => a + b, 0);
+  const finalScore = autoScore + essayTotalScore;
 
   function generateExam() {
     const selected: Question[] = [];
@@ -390,7 +391,11 @@ export default function PhysicsArena() {
               <div className="panel">
                 <div className="panel-head"><div><h1>✍️ Chấm bài</h1><p>Điểm tự động + chấm tự luận thủ công.</p></div></div>
                 {!exam.length ? <div className="empty">Chưa có bài thi.</div> : <>
-                  <div className="score-hero"><span>Điểm tự động <b>{autoScore.toFixed(2)}</b></span><span>Điểm tự luận <b>{Object.values(essayScores).reduce((a, b) => a + b, 0).toFixed(2)}</b></span><span>Tổng <b>{finalScore.toFixed(2)}</b></span></div>
+                  <div className="score-hero">
+                    <span>Điểm trắc nghiệm <b>{autoScore.toFixed(2)}</b></span>
+                    <span>Điểm tự luận <b>{essayTotalScore.toFixed(2)}</b></span>
+                    <span>Tổng điểm <b>{finalScore.toFixed(2)}</b></span>
+                  </div>
                   {exam.filter(q => q.section === "ESSAY").map(q => {
                     const studentAnswer = answers[q.id];
                     return (
@@ -412,7 +417,7 @@ export default function PhysicsArena() {
                             min="0" 
                             max={q.points || 1} 
                             step="0.25"
-                            style={{ width: "90px", padding: "6px 8px", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "14px" }}
+                            style={{ width: "90px", padding: "6px 8px", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "14px", background: "#fff", color: "#0f172a", fontWeight: "bold" }}
                             placeholder="0.0"
                             value={essayScores[q.id] ?? ""}
                             onChange={(e) => {
@@ -448,8 +453,9 @@ export default function PhysicsArena() {
 
                 <div className="metrics">
                   <div className="metric"><b>{studentName || "Chưa rõ"}</b><span>Học sinh</span></div>
-                  <div className="metric"><b>{exam.length}</b><span>Số câu</span></div>
-                  <div className="metric"><b>{finalScore.toFixed(2)}</b><span>Tổng điểm</span></div>
+                  <div className="metric"><b>{autoScore.toFixed(2)}</b><span>Điểm trắc nghiệm</span></div>
+                  <div className="metric"><b>{essayTotalScore.toFixed(2)}</b><span>Điểm tự luận</span></div>
+                  <div className="metric" style={{ background: "#f0fdf4", borderColor: "#bbf7d0" }}><b style={{ color: "#16a34a" }}>{finalScore.toFixed(2)}</b><span>Tổng điểm</span></div>
                 </div>
 
                 <div className="stat-card" style={{ marginTop: "20px", background: "#fff", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
@@ -458,14 +464,15 @@ export default function PhysicsArena() {
                     <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}><b>Họ và tên / Thông tin:</b> {studentName || "Chưa cập nhật"}</p>
                   </div>
 
-                  <h3 style={{ marginBottom: "10px", color: "#1e293b" }}>Chi tiết bài làm & Đáp án của học sinh</h3>
+                  <h3 style={{ marginBottom: "10px", color: "#1e293b" }}>Chi tiết bài làm, Đáp án đúng & Đối chiếu</h3>
                   <div className="table-wrap">
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
                       <thead>
                         <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
                           <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Mã câu / Phần</th>
                           <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Nội dung câu hỏi</th>
-                          <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Đáp án / Bài làm học sinh</th>
+                          <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Bài làm của HS</th>
+                          <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Đáp án đúng</th>
                           <th style={{ padding: "8px", border: "1px solid #cbd5e1" }}>Điểm</th>
                         </tr>
                       </thead>
@@ -474,22 +481,40 @@ export default function PhysicsArena() {
                           const ans = answers[q.id];
                           const isEssay = q.section === "ESSAY";
                           const essayScore = essayScores[q.id] || 0;
+                          
+                          let correctText = "";
+                          if (q.section === "MCQ") {
+                            correctText = q.correctOption || "";
+                          } else if (q.section === "TF") {
+                            correctText = q.tf ? q.tf.map((v, i) => `${['a','b','c','d'][i]}: ${v ? 'Đúng' : 'Sai'}`).join(", ") : "";
+                          } else if (q.section === "SHORT") {
+                            correctText = q.shortAnswer || "";
+                          } else {
+                            correctText = "(Chấm tự luận)";
+                          }
+
+                          let studentAnsText = "";
+                          if (isEssay) {
+                            studentAnsText = typeof ans === 'object' ? (ans?.text || "Chưa làm") : (ans || "Chưa làm");
+                          } else if (q.section === "TF") {
+                            studentAnsText = Array.isArray(ans) ? ans.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
+                          } else {
+                            studentAnsText = String(ans || "Chưa chọn");
+                          }
+
                           return (
                             <tr key={q.id || idx}>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1", fontWeight: "bold" }}>{q.id} ({q.section})</td>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1" }}>{q.content}</td>
-                              <td style={{ padding: "8px", border: "1px solid #cbd5e1" }}>
-                                {isEssay ? (
-                                  <div>
-                                    <div style={{ fontWeight: "600", color: "#0f172a" }}><b>Tự luận:</b> {typeof ans === 'object' ? ans?.text : (ans || "Chưa làm")}</div>
-                                    {typeof ans === 'object' && ans?.file && <div style={{ color: "#2563eb", fontSize: "12px", fontWeight: "500" }}>File: {ans.file}</div>}
-                                  </div>
-                                ) : (
-                                  <span style={{ fontWeight: "600", color: "#0f172a" }}>{String(ans || "Chưa chọn")}</span>
-                                )}
+                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", fontWeight: "600", color: "#0f172a" }}>
+                                {studentAnsText}
+                                {typeof ans === 'object' && ans?.file && <div style={{ color: "#2563eb", fontSize: "12px", fontWeight: "500" }}>File: {ans.file}</div>}
+                              </td>
+                              <td style={{ padding: "8px", border: "1px solid #cbd5e1", color: "#16a34a", fontWeight: "600" }}>
+                                {correctText}
                               </td>
                               <td style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "center", fontWeight: "bold" }}>
-                                {isEssay ? `${essayScore} đ` : "-"}
+                                {isEssay ? `${essayScore} đ` : (q.section === "MCQ" ? (ans === q.correctOption ? `${q.points} đ` : "0 đ") : (q.section === "SHORT" ? ((Math.abs(Number(ans) - Number(q.shortAnswer)) <= Number(q.tolerance || 0)) ? `${q.points} đ` : "0 đ") : `${scoreTF(ans, q.tf, q.points).toFixed(2)} đ`))}
                               </td>
                             </tr>
                           );
@@ -503,7 +528,7 @@ export default function PhysicsArena() {
           </div>
         </section>
       ) : (
-        <StudentView exam={exam} answers={answers} setAnswers={setAnswers} current={current} setCurrent={setCurrent} seconds={seconds} setSeconds={setSeconds} studentName={studentName} setStudentName={setStudentName} submitExam={submitExam} submitted={submitted} />
+        <StudentView exam={exam} answers={answers} setAnswers={setAnswers} current={current} setCurrent={setCurrent} seconds={seconds} setSeconds={setSeconds} studentName={studentName} setStudentName={setStudentName} submitExam={submitExam} submitted={submitted} autoScore={autoScore} essayScores={essayScores} />
       )}
 
       <footer>⚡ Physics Test Arena · Sẵn sàng triển khai GitHub → Vercel → Supabase</footer>
@@ -511,7 +536,7 @@ export default function PhysicsArena() {
   );
 }
 
-function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, setSeconds, studentName, setStudentName, submitExam, submitted }: { exam: Question[], answers: Record<string, any>, setAnswers: any, current: number, setCurrent: any, seconds: number, setSeconds: any, studentName: string, setStudentName: any, submitExam: () => void, submitted: boolean }) {
+function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, setSeconds, studentName, setStudentName, submitExam, submitted, autoScore, essayScores }: { exam: Question[], answers: Record<string, any>, setAnswers: any, current: number, setCurrent: any, seconds: number, setSeconds: any, studentName: string, setStudentName: any, submitExam: () => void, submitted: boolean, autoScore: number, essayScores: Record<string, number> }) {
   const q = exam[current];
   const [started, setStarted] = useState(false);
   
@@ -553,6 +578,72 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
   if (!exam.length) return <div className="student-start"><h1>Chưa có đề thi</h1><p>Giáo viên cần tạo đề trước.</p></div>;
   
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0"), ss = String(seconds % 60).padStart(2, "0");
+  const essayTot = Object.values(essayScores).reduce((a, b) => a + b, 0);
+
+  if (submitted) {
+    return (
+      <div className="student-shell" style={{ maxWidth: "800px", margin: "20px auto", background: "#fff", padding: "20px", borderRadius: "12px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <h2 style={{ color: "#1e293b", marginBottom: "5px" }}>🎉 KẾT QUẢ BÀI LÀM</h2>
+          <p style={{ color: "#64748b", margin: 0 }}>Học sinh: <b>{studentName}</b></p>
+        </div>
+
+        <div className="metrics" style={{ display: "flex", justifyContent: "space-around", marginBottom: "20px", background: "#f8fafc", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <div style={{ textAlign: "center" }}>
+            <span style={{ display: "block", fontSize: "13px", color: "#64748b" }}>Điểm trắc nghiệm</span>
+            <b style={{ fontSize: "18px", color: "#2563eb" }}>{autoScore.toFixed(2)}</b>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <span style={{ display: "block", fontSize: "13px", color: "#64748b" }}>Điểm tự luận</span>
+            <b style={{ fontSize: "18px", color: "#0284c7" }}>{essayTot.toFixed(2)}</b>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <span style={{ display: "block", fontSize: "13px", color: "#64748b" }}>Tổng điểm</span>
+            <b style={{ fontSize: "18px", color: "#16a34a" }}>{(autoScore + essayTot).toFixed(2)}</b>
+          </div>
+        </div>
+
+        <h3 style={{ marginBottom: "15px", color: "#1e293b" }}>Kiểm tra lại lựa chọn & Đáp án</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {exam.map((item, idx) => {
+            const studentAns = answers[item.id];
+            let correctDesc = "";
+            if (item.section === "MCQ") correctDesc = item.correctOption || "";
+            else if (item.section === "SHORT") correctDesc = item.shortAnswer || "";
+            else if (item.section === "TF") correctDesc = item.tf ? item.tf.map((v, i) => `${['a','b','c','d'][i]}: ${v ? 'Đúng' : 'Sai'}`).join(", ") : "";
+            else correctDesc = "(Chấm tự luận bởi GV)";
+
+            let studentDesc = "";
+            if (item.section === "ESSAY") {
+              studentDesc = typeof studentAns === 'object' ? (studentAns?.text || "Chưa làm") : (studentAns || "Chưa làm");
+            } else if (item.section === "TF") {
+              studentDesc = Array.isArray(studentAns) ? studentAns.map((v, i) => v !== undefined ? `${['a','b','c','d'][i]}: ${v ? 'Đ' : 'S'}` : "").filter(Boolean).join(", ") : "Chưa chọn";
+            } else {
+              studentDesc = String(studentAns || "Chưa chọn");
+            }
+
+            return (
+              <div key={item.id} style={{ border: "1px solid #e2e8f0", padding: "12px", borderRadius: "8px", background: "#fdfdfd" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b", marginBottom: "4px" }}>Câu {idx + 1} ({item.section})</div>
+                <div style={{ fontWeight: "600", color: "#1e293b", marginBottom: "6px" }}>{item.content}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "14px" }}>
+                  <div style={{ background: "#f1f5f9", padding: "8px", borderRadius: "6px" }}>
+                    <span style={{ color: "#475569", display: "block", fontSize: "12px", fontWeight: "bold" }}>Lựa chọn của bạn:</span>
+                    <span style={{ color: "#0f172a", fontWeight: "600" }}>{studentDesc}</span>
+                    {typeof studentAns === 'object' && studentAns?.file && <div style={{ color: "#2563eb", fontSize: "12px" }}>File: {studentAns.file}</div>}
+                  </div>
+                  <div style={{ background: "#f0fdf4", padding: "8px", borderRadius: "6px", border: "1px solid #bbf7d0" }}>
+                    <span style={{ color: "#16a34a", display: "block", fontSize: "12px", fontWeight: "bold" }}>Đáp án đúng:</span>
+                    <span style={{ color: "#166534", fontWeight: "600" }}>{correctDesc}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="student-shell">
@@ -579,7 +670,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
           <h2>{q.content}</h2>
           {q.imageUrl && <img className="question-img" src={q.imageUrl} alt="minh họa" />}
           
-          {/* Trắc nghiệm MCQ */}
           {q.section === "MCQ" && q.options?.map(o => (
             <label className={`option ${answers[q.id] === o.key ? "selected" : ""}`} key={o.key}>
               <input type="radio" name={q.id} checked={answers[q.id] === o.key} onChange={() => setAnswers((a: any) => ({ ...a, [q.id]: o.key }))} />
@@ -587,7 +677,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
             </label>
           ))}
           
-          {/* Đúng / Sai TF */}
           {q.section === "TF" && (
             <div className="tf-grid">
               {["a", "b", "c", "d"].map((x, i) => (
@@ -600,12 +689,10 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
             </div>
           )}
           
-          {/* Trả lời ngắn SHORT */}
           {q.section === "SHORT" && (
             <input className="short-input" placeholder="Nhập đáp án..." value={answers[q.id] ?? ""} onChange={(e) => setAnswers((a: any) => ({ ...a, [q.id]: e.target.value }))} />
           )}
           
-          {/* Tự luận ESSAY có kèm nút tải file */}
           {q.section === "ESSAY" && (
             <div className="essay-container">
               <div style={{ display: "flex", gap: "5px", marginBottom: "6px", flexWrap: "wrap", background: "#f8fafc", padding: "6px", border: "1px solid #e2e8f0", borderRadius: "4px" }}>
