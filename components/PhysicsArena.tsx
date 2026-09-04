@@ -272,40 +272,85 @@ function StudentView({exam,answers,setAnswers,current,setCurrent,seconds,setSeco
     {q.section==="SHORT"&&<input className="short-input" placeholder="Nhập đáp án..." value={answers[q.id]??""} onChange={(e)=>setAnswers((a:any)=>({...a,[q.id]:e.target.value}))}/>}
     
     {/* Tự luận ESSAY có kèm nút tải file */}
-    {q.section==="ESSAY"&&(
-        <div className="essay-container">
-            <textarea 
-                className="essay-input" 
-                placeholder="Trình bày bài làm hoặc gõ công thức..." 
-                value={answers[q.id]?.text ?? answers[q.id] ?? ""} 
-                onChange={(e) => {
-                    const val = e.target.value;
-                    setAnswers((prev: any) => ({
-                        ...prev,
-                        [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
-                            ? { ...prev[q.id], text: val } 
-                            : { text: val, file: prev[q.id]?.file }
-                    }));
-                }}
-            />
-            <div style={{marginTop: "8px", display: "flex", alignItems: "center", gap: "10px"}}>
-                <label className="secondary-btn" style={{cursor: "pointer", display: "inline-block", padding: "6px 12px", fontSize: "14px", border: "1px solid #ccc", borderRadius: "4px"}}>
-                    📁 Tải file/ảnh bài làm lên <input type="file" style={{display: "none"}} onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
+   {q.section==="ESSAY" && (
+    <div className="essay-container">
+        {/* Thanh công cụ chèn nhanh ký hiệu Toán - Lý - Hóa */}
+        <div style={{display: "flex", gap: "5px", marginBottom: "6px", flexWrap: "wrap", background: "#f8fafc", padding: "6px", border: "1px solid #e2e8f0", borderRadius: "4px"}}>
+            <span style={{fontSize: "12px", fontWeight: "bold", color: "#64748b", alignSelf: "center", marginRight: "5px"}}>Chèn nhanh:</span>
+            {[
+                {label: "x²", insert: "^{2}"},
+                {label: "x₁", insert: "_{1}"},
+                {label: "a/b", insert: "\\frac{a}{b}"},
+                {label: "√x", insert: "\\sqrt{x}"},
+                {label: "α", insert: "\\alpha"},
+                {label: "β", insert: "\\beta"},
+                {label: "Δ", insert: "\\Delta"},
+                {label: "°C", insert: "^\\circ\\text{C}"},
+                {label: "Ω", insert: "\\Omega"},
+            ].map((btn, idx) => (
+                <button 
+                    key={idx}
+                    type="button"
+                    style={{padding: "2px 8px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: "3px", cursor: "pointer", fontSize: "13px"}}
+                    onClick={() => {
+                        const textarea = document.getElementById(`essay-textarea-${q.id}`) as HTMLTextAreaElement;
+                        if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const val = textarea.value;
+                            const newVal = val.substring(0, start) + btn.insert + val.substring(end);
+                            
+                            // Cập nhật state giá trị bài làm
                             setAnswers((prev: any) => ({
                                 ...prev,
                                 [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
-                                    ? { ...prev[q.id], file: file.name } 
-                                    : { text: prev[q.id] || "", file: file.name }
+                                    ? { ...prev[q.id], text: newVal } 
+                                    : { text: newVal, file: prev[q.id]?.file }
                             }));
                         }
-                    }} />
-                </label>
-                {answers[q.id]?.file && <span style={{fontSize: "13px", color: "#4ade80"}}>Đã đính kèm: {answers[q.id].file}</span>}
-            </div>
+                    }}
+                >
+                    {btn.label}
+                </button>
+            ))}
         </div>
-    )}
+
+        {/* Ô nhập văn bản chính */}
+        <textarea 
+            id={`essay-textarea-${q.id}`}
+            className="essay-input" 
+            placeholder="Trình bày bài làm, sử dụng các nút chèn nhanh ở trên..." 
+            value={answers[q.id]?.text ?? answers[q.id] ?? ""} 
+            onChange={(e) => {
+                const val = e.target.value;
+                setAnswers((prev: any) => ({
+                    ...prev,
+                    [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
+                        ? { ...prev[q.id], text: val } 
+                        : { text: val, file: prev[q.id]?.file }
+                }));
+            }}
+        />
+        
+        {/* Nút tải file đính kèm */}
+        <div style={{marginTop: "8px", display: "flex", alignItems: "center", gap: "10px"}}>
+            <label className="secondary-btn" style={{cursor: "pointer", display: "inline-block", padding: "6px 12px", fontSize: "14px", border: "1px solid #ccc", borderRadius: "4px"}}>
+                📁 Tải file/ảnh bài làm lên <input type="file" style={{display: "none"}} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                        setAnswers((prev: any) => ({
+                            ...prev,
+                            [q.id]: typeof prev[q.id] === 'object' && prev[q.id] !== null 
+                                ? { ...prev[q.id], file: file.name } 
+                                : { text: prev[q.id] || "", file: file.name }
+                        }));
+                    }
+                }} />
+            </label>
+            {answers[q.id]?.file && <span style={{fontSize: "13px", color: "#4ade80"}}>Đã đính kèm: {answers[q.id].file}</span>}
+        </div>
+    </div>
+)}
 
     <nav className="nav-actions"><button onClick={()=>setCurrent(Math.max(0,current-1))} disabled={current===0}>Câu trước</button><span>{current+1} / {exam.length}</span>{current<exam.length-1?<button onClick={()=>setCurrent(current+1)}>Câu tiếp</button>:<button className="primary-btn" onClick={submitExam}>Nộp bài</button>}</nav></article></div></div>;
 function Metric({n,t}:{n:any,t:string}){return <div className="metric"><b>{n}</b><span>{t}</span></div>}
