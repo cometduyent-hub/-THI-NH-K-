@@ -1,5 +1,9 @@
-import CHINH PHỤC KHTN CÙNG THẦY TUẤN from "@/components/PhysicsArena";
+import PhysicsArena from "@/components/PhysicsArena"; // Hoặc đường dẫn trỏ đúng tới file PhysicsArena của thầy
 
 export default function Home() {
-  return <CHINH PHỤC KHTN CÙNG THẦY TUẤN />;
+  return (
+    <main>
+      <PhysicsArena />
+    </main>
+  );
 }
