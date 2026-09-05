@@ -1,46 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// --- CÁC HÀM TIỆN ÍCH & XỬ LÝ DỮ LIỆU ---
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function scoreTF(answer: boolean[] | undefined, key: boolean[] | undefined, point: number): number {
-  if (!answer || !key) return 0;
-  const wrong = answer.reduce((n, v, i) => n + (v !== key[i] ? 1 : 0), 0);
-  const factor = [1, .5, .25, .1, 0][wrong];
-  return point * factor;
-}
-
-function parseRow(r: any): Question {
-  const section = String(r.section || "MCQ").toUpperCase() as Section;
-  const options = ["A", "B", "C", "D"].map(k => ({ key: k, text: String(r["option" + k] ?? "") })).filter(x => x.text);
-  const tf = ["tfA", "tfB", "tfC", "tfD"].map(k => String(r[k]).toLowerCase() === "true" || r[k] === true);
-  return {
-    id: String(r.id || crypto.randomUUID()),
-    section,
-    subject: String(r.subject || "Vật lí"),
-    grade: String(r.grade || "8"),
-    topic: String(r.topic || "Chưa phân loại"),
-    difficulty: String(r.difficulty || "TH") as Difficulty,
-    content: String(r.content || ""),
-    imageUrl: String(r.imageUrl || "") || undefined,
-    options: options.length ? options : undefined,
-    tf: section === "TF" ? tf : undefined,
-    shortAnswer: String(r.shortAnswer || "") || undefined,
-    tolerance: Number(r.tolerance || 0),
-    points: Number(r.points || 1)
-  };
-}
-
+// --- ĐỊNH NGHĨA KIỂU DỮ LIỆU CHUẨN ---
 type Section = "MCQ" | "TF" | "SHORT" | "ESSAY";
 type Difficulty = "NB" | "TH" | "VD" | "VDC";
 
@@ -67,8 +29,8 @@ const sectionLabel: Record<Section, string> = {
   ESSAY: "Tự luận & Vẽ hình"
 };
 
-// --- CÔNG CỤ BẢNG VẼ CHO HỌC SINH ---
-function DrawingPad({ onSave, initialData }: { onSave: (dataUrl: string) => void, initialData?: string }) {
+// --- CÔNG CỤ BẢNG VẼ CHO HỌC SINH (DRAWING TOOL) ---
+function DrawingPad({ onSave, initialData }: { onSave: (dataUrl: string) => void; initialData?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -157,20 +119,48 @@ function DrawingPad({ onSave, initialData }: { onSave: (dataUrl: string) => void
   );
 }
 
-// --- BỘ CÔNG THỨC VÀ KÝ HIỆU KHOA HỌC NHANH ---
-const scientificSymbols = [
+// --- BỘ CÔNG THỨC VÀ KÝ HIỆU KHOA HỌC NHANH (EQUATION TOOL) ---
+const scientificSymbols: string[] = [
   "s = v·t", "v = s/t", "a = Δv/Δt", "F = m·a", "P = 10m", "A = F·s", "I = U/R", "Q = I²·R·t",
   "H₂O", "CO₂", "O₂", "HCl", "H₂SO₄", "NaOH", "NaCl", "CaCO₃", "→", "↑", "↓", "⇌",
   "²", "³", "√", "°C", "Δ", "α", "β", "λ", "μ", "Ω", "≤", "≥", "≠"
 ];
 
-// --- COMPONENT GIAO DIỆN HỌC SINH ---
-function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, setSeconds, studentName, setStudentName, submitExam, submitted, autoScore, essayScores }: any) {
+// --- GIAO DIỆN LÀM BÀI CỦA HỌC SINH ---
+interface StudentViewProps {
+  exam: Question[];
+  answers: Record<string, any>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  current: number;
+  setCurrent: React.Dispatch<React.SetStateAction<number>>;
+  seconds: number;
+  setSeconds: React.Dispatch<React.SetStateAction<number>>;
+  studentName: string;
+  setStudentName: React.Dispatch<React.SetStateAction<string>>;
+  submitExam: () => void;
+  submitted: boolean;
+  autoScore: number;
+}
+
+function StudentView({
+  exam,
+  answers,
+  setAnswers,
+  current,
+  setCurrent,
+  seconds,
+  setSeconds,
+  studentName,
+  setStudentName,
+  submitExam,
+  submitted,
+  autoScore
+}: StudentViewProps) {
   const q = exam[current];
-  const [started, setStarted] = useState(false);
-  const [recording, setRecording] = useState(false);
+  const [started, setStarted] = useState<boolean>(false);
+  const [recording, setRecording] = useState<boolean>(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>(null as any);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const submitExamRef = useRef(submitExam);
   useEffect(() => {
@@ -203,7 +193,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
     const text = currentAnswerObj.text || "";
     const newText = text.substring(0, start) + symbol + text.substring(end);
     
-    setAnswers((prev: any) => ({
+    setAnswers((prev: Record<string, any>) => ({
       ...prev,
       [q.id]: {
         ...(prev[q.id] || {}),
@@ -217,12 +207,12 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
-      mediaRecorderRef.current.ondataavailable = (event) => {
+      mediaRecorderRef.current.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
       mediaRecorderRef.current.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAnswers((prev: any) => ({
+        setAnswers((prev: Record<string, any>) => ({
           ...prev,
           [q.id]: {
             ...(prev[q.id] || {}),
@@ -251,14 +241,14 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
       <div style={{ background: "#fff", padding: "20px", borderRadius: "8px", border: "1px solid #e2e8f0", width: "100%", maxWidth: "380px", textAlign: "left", display: "flex", flexDirection: "column", gap: "12px" }}>
         <div>
           <label style={{ fontSize: "12px", fontWeight: "600", color: "#334155" }}>Họ và tên học sinh:</label>
-          <input type="text" placeholder="Nguyễn Văn A" value={studentName} onChange={e => setStudentName(e.target.value)} style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "4px", marginTop: "4px" }} />
+          <input type="text" placeholder="Nguyễn Văn A" value={studentName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStudentName(e.target.value)} style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "4px", marginTop: "4px" }} />
         </div>
         <button onClick={() => { if (!studentName.trim()) { alert("Vui lòng nhập tên!"); return; } setStarted(true); }} style={{ width: "100%", padding: "10px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>🚀 Bắt đầu làm bài</button>
       </div>
     </div>
   );
 
-  if (!exam.length) return <div style={{ textAlign: "center", padding: "40px" }}>Đang tải đề thi...</div>;
+  if (!exam.length) return <div style={{ textAlign: "center", padding: "40px" }}>Đang tải đề thi mẫu...</div>;
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
@@ -270,7 +260,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
         <p style={{ textAlign: "center", color: "#64748b" }}>Học sinh: <b>{studentName}</b></p>
         <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "15px", borderRadius: "6px", textAlign: "center", marginTop: "15px" }}>
           Điểm trắc nghiệm tự động: <b style={{ color: "#16a34a", fontSize: "18px" }}>{autoScore.toFixed(2)}</b>
-          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>Phần tự luận, hình vẽ & ghi âm sẽ được giáo viên chấm chi tiết sau.</div>
+          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>Phần tự luận, hình vẽ và ghi âm sẽ được giáo viên chấm điểm chi tiết.</div>
         </div>
       </div>
     );
@@ -284,7 +274,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
         <div><b>{studentName}</b></div>
         <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
           <div style={{ fontWeight: "bold", color: seconds < 60 ? "#dc2626" : "#0f172a" }}>⏱️ {mm}:{ss}</div>
-          <button onClick={() => { if (confirm("Nộp bài thi?")) submitExam(); }} style={{ background: "#16a34a", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", fontWeight: "600", cursor: "pointer" }}>Nộp bài</button>
+          <button onClick={() => { if (confirm("Bạn có chắc chắn muốn nộp bài thi?")) submitExam(); }} style={{ background: "#16a34a", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", fontWeight: "600", cursor: "pointer" }}>Nộp bài</button>
         </div>
       </div>
 
@@ -292,7 +282,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
         <div style={{ background: "#f8fafc", padding: "15px", borderRight: "1px solid #e2e8f0" }}>
           <div style={{ fontSize: "12px", fontWeight: "bold", color: "#64748b", marginBottom: "10px" }}>CÂU HỎI</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
-            {exam.map((x: any, i: number) => (
+            {exam.map((x: Question, i: number) => (
               <button key={x.id} onClick={() => setCurrent(i)} style={{ padding: "8px", background: i === current ? "#2563eb" : (answers[x.id] !== undefined ? "#e0f2fe" : "#fff"), color: i === current ? "#fff" : "#0f172a", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{i + 1}</button>
             ))}
           </div>
@@ -308,23 +298,23 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
             </div>
           )}
 
-          {q.section === "MCQ" && q.options?.map((o: any) => (
+          {q.section === "MCQ" && q.options?.map((o) => (
             <label key={o.key} style={{ display: "flex", gap: "10px", padding: "10px", border: "1px solid #e2e8f0", borderRadius: "6px", marginBottom: "8px", cursor: "pointer", background: answers[q.id] === o.key ? "#eff6ff" : "#fff" }}>
-              <input type="radio" name={q.id} checked={answers[q.id] === o.key} onChange={() => setAnswers((a: any) => ({ ...a, [q.id]: o.key }))} />
+              <input type="radio" name={q.id} checked={answers[q.id] === o.key} onChange={() => setAnswers((a: Record<string, any>) => ({ ...a, [q.id]: o.key }))} />
               <span><b>{o.key}.</b> {o.text}</span>
             </label>
           ))}
 
           {q.section === "SHORT" && (
             <div>
-              <input type="text" placeholder="Nhập câu trả lời ngắn..." value={answers[q.id] ?? ""} onChange={e => setAnswers((a: any) => ({ ...a, [q.id]: e.target.value }))} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginBottom: "10px" }} />
+              <input type="text" placeholder="Nhập câu trả lời ngắn..." value={answers[q.id] ?? ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswers((a: Record<string, any>) => ({ ...a, [q.id]: e.target.value }))} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginBottom: "10px" }} />
               <DrawingPad 
                 initialData={currentAnswerObj.drawingData}
-                onSave={(dataUrl) => {
-                  setAnswers((prev: any) => ({
+                onSave={(dataUrl: string) => {
+                  setAnswers((prev: Record<string, any>) => ({
                     ...prev,
                     [q.id]: {
-                      ...(typeof prev[q.id] === 'object' ? prev[q.id] : { text: prev[q.id] || "" }),
+                      ...(typeof prev[q.id] === 'object' && prev[q.id] !== null ? prev[q.id] : { text: prev[q.id] || "" }),
                       drawingData: dataUrl
                     }
                   }));
@@ -335,10 +325,10 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
 
           {q.section === "ESSAY" && (
             <div>
-              {/* Công cụ công thức & ký hiệu nhanh */}
+              {/* Bảng công thức nhanh */}
               <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px", background: "#f1f5f9", padding: "6px", borderRadius: "6px" }}>
                 <span style={{ fontSize: "12px", fontWeight: "bold", alignSelf: "center", marginRight: "5px" }}>Công thức nhanh:</span>
-                {scientificSymbols.map(sym => (
+                {scientificSymbols.map((sym: string) => (
                   <button key={sym} type="button" onClick={() => insertSymbol(sym)} style={{ padding: "4px 6px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "12px", cursor: "pointer", fontFamily: "monospace" }}>{sym}</button>
                 ))}
               </div>
@@ -348,9 +338,9 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
                 rows={4}
                 placeholder="Nhập bài làm tự luận chi tiết..."
                 value={currentAnswerObj.text || ""}
-                onChange={e => {
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                   const val = e.target.value;
-                  setAnswers((prev: any) => ({
+                  setAnswers((prev: Record<string, any>) => ({
                     ...prev,
                     [q.id]: {
                       ...(prev[q.id] || {}),
@@ -361,11 +351,11 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
                 style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", fontFamily: "inherit" }}
               />
 
-              {/* Bảng vẽ tích hợp */}
+              {/* Tích hợp bảng vẽ canvas */}
               <DrawingPad 
                 initialData={currentAnswerObj.drawingData}
-                onSave={(dataUrl) => {
-                  setAnswers((prev: any) => ({
+                onSave={(dataUrl: string) => {
+                  setAnswers((prev: Record<string, any>) => ({
                     ...prev,
                     [q.id]: {
                       ...(prev[q.id] || {}),
@@ -396,21 +386,51 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
   );
 }
 
-// --- COMPONENT CHÍNH PHYSICS ARENA ---
+// --- COMPONENT CHÍNH ---
 export default function PhysicsArena() {
   const [mode, setMode] = useState<"teacher" | "student">("teacher");
-  const [exam, setExam] = useState<Question[]>([]);
+  
+  // Dữ liệu mẫu kiểm tra
+  const [exam, setExam] = useState<Question[]>([
+    {
+      id: "q1",
+      section: "MCQ",
+      subject: "Khoa học tự nhiên",
+      grade: "6",
+      topic: "Lực và Chuyển động",
+      difficulty: "NB",
+      content: "Đơn vị đo lực trong hệ SI là gì?",
+      options: [
+        { key: "A", text: "Kilôgam (kg)" },
+        { key: "B", text: "Niu-tơn (N)" },
+        { key: "C", text: "Mét trên giây (m/s)" },
+        { key: "D", text: "Giôn (J)" }
+      ],
+      shortAnswer: "B",
+      points: 1
+    },
+    {
+      id: "q2",
+      section: "ESSAY",
+      subject: "Khoa học tự nhiên",
+      grade: "6",
+      topic: "Áp suất chất lỏng",
+      difficulty: "VD",
+      content: "Em hãy vẽ sơ đồ lực tác dụng và giải thích vì sao vật chìm hay nổi trong nước.",
+      points: 2
+    }
+  ]);
+
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [current, setCurrent] = useState<number>(0);
-  const [seconds, setSeconds] = useState<number>(1800); // 30 phút
+  const [seconds, setSeconds] = useState<number>(1800);
   const [studentName, setStudentName] = useState<string>("");
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [autoScore, setAutoScore] = useState<number>(0);
-  const [essayScores, setEssayScores] = useState<Record<string, number>>({});
 
   const submitExam = () => {
     let score = 0;
-    exam.forEach(q => {
+    exam.forEach((q: Question) => {
       const ans = answers[q.id];
       if (q.section === "MCQ" && ans === q.shortAnswer) {
         score += (q.points || 1);
@@ -423,7 +443,7 @@ export default function PhysicsArena() {
   return (
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "sans-serif" }}>
       <header style={{ background: "#1e293b", color: "#fff", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ margin: 0, fontSize: "18px" }}>⚡ ĐẤU TRƯỜNG VẬT LÝ - KHTN 6</h2>
+        <h2 style={{ margin: 0, fontSize: "18px" }}>⚡ ĐẤU TRƯỜNG KHTN - THẦY TUẤN</h2>
         <div>
           <button onClick={() => setMode("teacher")} style={{ padding: "6px 12px", background: mode === "teacher" ? "#2563eb" : "#475569", color: "#fff", border: "none", borderRadius: "4px", marginRight: "8px", cursor: "pointer" }}>Giáo viên</button>
           <button onClick={() => setMode("student")} style={{ padding: "6px 12px", background: mode === "student" ? "#2563eb" : "#475569", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}>Học sinh</button>
@@ -433,9 +453,8 @@ export default function PhysicsArena() {
       <main style={{ padding: "20px" }}>
         {mode === "teacher" ? (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "8px", maxWidth: "800px", margin: "0 auto" }}>
-            <h3>Khu vực Quản lý Đề thi & Tạo câu hỏi</h3>
-            <p style={{ color: "#64748b" }}>Thầy có thể thêm đề mẫu hoặc cấu hình câu hỏi trắc nghiệm, tự luận kèm công thức & bảng vẽ cho học sinh tại đây.</p>
-            {/* Thầy có thể mở rộng bảng quản lý đề thi ở đây */}
+            <h3>Khu vực Quản lý Đề thi & Soạn câu hỏi</h3>
+            <p style={{ color: "#64748b" }}>Thầy có thể cấu hình đề kiểm tra, import danh sách câu hỏi hoặc xem trước giao diện thi của học sinh bằng cách bấm sang tab "Học sinh" phía trên.</p>
           </div>
         ) : (
           <StudentView 
@@ -451,7 +470,6 @@ export default function PhysicsArena() {
             submitExam={submitExam}
             submitted={submitted}
             autoScore={autoScore}
-            essayScores={essayScores}
           />
         )}
       </main>
