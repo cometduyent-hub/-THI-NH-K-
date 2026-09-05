@@ -31,7 +31,7 @@ type Question = {
   imageUrl?: string;
   options?: { key: string; text: string }[];
   correctOption?: string;
-  subTfs?: SubTFItem[]; // Chi tiết 4 ý cho câu Đúng/Sai kèm mức độ riêng
+  subTfs?: SubTFItem[];
   shortAnswer?: string;
   tolerance?: number;
   points: number;
@@ -145,7 +145,6 @@ function shuffleExamSections(questionList: Question[]) {
   ];
 }
 
-// Chấm điểm câu Đúng/Sai chuẩn THCS: Sai 1 ý trừ 0.25, 2 ý trừ 0.5, 3 ý trừ 0.75, 4 ý trừ 1.0 (trên tổng điểm câu)
 function scoreTF(userAns: Record<string, boolean> | undefined, subTfs: SubTFItem[] | undefined, totalPoint: number): number {
   if (!subTfs || !userAns) return 0;
   let wrongCount = 0;
@@ -215,7 +214,6 @@ export default function PhysicsArena() {
   const [essayScores, setEssayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
 
-  // Đồng hồ đếm ngược chạy an toàn phía Client
   useEffect(() => {
     if (mode === "student" && exam.length > 0 && !submitted) {
       const timer = setInterval(() => {
@@ -368,7 +366,6 @@ export default function PhysicsArena() {
       paddingBottom: "40px",
       color: "#0f172a"
     }}>
-      {/* THANH TIÊU ĐỀ CHÍNH VỚI CHỮ 3D NỔI BẬT */}
       <header className="topbar" style={{ 
         display: "flex", justifyContent: "space-between", alignItems: "center", 
         padding: "16px 28px", background: "#ffffff", 
@@ -539,7 +536,6 @@ export default function PhysicsArena() {
                           }}
                           style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginBottom: "10px", fontWeight: "600" }} 
                         />
-                        {/* CÁC NÚT TẢI MEDIA (ẢNH, VIDEO, AUDIO) CHO CÂU HỎI */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "8px" }}>
                           <div>
                             <label style={{ fontSize: "11px", fontWeight: "600", color: "#0284c7" }}>🖼️ Link Ảnh minh họa:</label>
@@ -582,7 +578,6 @@ export default function PhysicsArena() {
                           </div>
                         </div>
 
-                        {/* CẤU HÌNH CHI TIẾT CÂU ĐÚNG/SAI VÀ MỨC ĐỘ */}
                         {q.section === "TF" && q.subTfs && (
                           <div style={{ marginTop: "12px", background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
                             <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e", marginBottom: "6px" }}>Cấu hình 4 ý (a, b, c, d) & Mức độ riêng:</div>
@@ -661,7 +656,6 @@ export default function PhysicsArena() {
           </div>
         </section>
       ) : (
-        /* GIAO DIỆN HỌC SINH LÀM BÀI */
         <section style={{ maxWidth: "800px", margin: "24px auto", background: "#fff", padding: "30px", borderRadius: "14px", border: "1px solid #cbd5e1", boxShadow: "0 4px 12px -2px rgba(0,0,0,0.05)" }}>
           {!submitted ? (
             <div>
@@ -713,23 +707,21 @@ export default function PhysicsArena() {
                             <div key={sub.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
                               <span style={{ fontSize: "13px" }}><b>{sub.id.toUpperCase()}.</b> {sub.content}</span>
                               <div style={{ display: "flex", gap: "12px" }}>
-                                <label style={{ fontSize: "12px", cursor: "pointer" }}>
+                                <label style={{ fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                                   <input 
                                     type="radio" 
                                     name={`tf_${q.id}_${sub.id}`} 
                                     checked={answers[q.id]?.[sub.id] === true}
                                     onChange={() => setAnswers(prev => ({ ...prev, [q.id]: { ...(prev[q.id] || {}), [sub.id]: true } }))}
-                                  > Đúng
-                                  </input>
+                                  /> Đúng
                                 </label>
-                                <label style={{ fontSize: "12px", cursor: "pointer" }}>
+                                <label style={{ fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                                   <input 
                                     type="radio" 
                                     name={`tf_${q.id}_${sub.id}`} 
                                     checked={answers[q.id]?.[sub.id] === false}
                                     onChange={() => setAnswers(prev => ({ ...prev, [q.id]: { ...(prev[q.id] || {}), [sub.id]: false } }))}
-                                  > Sai
-                                  </input>
+                                  /> Sai
                                 </label>
                               </div>
                             </div>
