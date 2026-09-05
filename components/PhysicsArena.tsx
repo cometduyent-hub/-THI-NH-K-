@@ -123,20 +123,28 @@ export default function PhysicsArena() {
   const [questions, setQuestions] = useState<Question[]>(seed);
   const [matrix, setMatrix] = useState<Matrix>(defaultMatrix);
   const [exam, setExam] = useState<Question[]>([]);
+  const [examCodeId, setExamCodeId] = useState<string>("");
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [current, setCurrent] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  
+  // Thông tin học sinh đầy đủ: Tên, Lớp, Trường
   const [studentName, setStudentName] = useState("");
+  const [studentClass, setStudentClass] = useState("");
+  const [studentSchool, setStudentSchool] = useState("");
+
   const [minutes, setMinutes] = useState(45);
   const [seconds, setSeconds] = useState(45 * 60);
   const [essayScores, setEssayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
 
+  // Tự động tải đề thi từ Supabase nếu có param ?exam=MÃ_ĐỀ
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const examId = params.get("exam");
     if (examId) {
       setMode("student");
+      setExamCodeId(examId);
       async function fetchExamFromCloud() {
         const { data, error } = await supabase.from('exams').select('questions_data').eq('id', examId).single();
         if (data && data.questions_data) {
@@ -185,12 +193,14 @@ export default function PhysicsArena() {
     setNotice(`Đã tạo đề ${randomized.length} câu từ ngân hàng.`);
   }
 
+  // Hàm xuất đề và lưu lên Cloud Supabase
   async function handlePublishAndGetLink() {
     if (exam.length === 0) {
       alert("Chưa có đề thi nào được tạo! Thầy hãy bấm 'Tạo đề thi' trước.");
       return;
     }
     const examCode = "KHTN_" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    setExamCodeId(examCode);
     const { error } = await supabase.from('exams').insert([{ id: examCode, title: "Kiểm tra Khoa học tự nhiên", questions_data: exam }]);
     if (error) {
       alert("Lỗi khi lưu đề lên hệ thống: " + error.message);
@@ -224,10 +234,27 @@ export default function PhysicsArena() {
     if (file.name.endsWith(".json")) reader.readAsText(file); else reader.readAsArrayBuffer(file);
   }
 
-  function submitExam() {
+  // Hàm nộp bài và lưu kết quả học sinh lên Supabase
+  async function submitExam() {
     setSubmitted(true);
     setTab("grading");
-    setNotice("Bài đã được nộp. Các phần tự động đã được chấm.");
+
+    // Đẩy kết quả bài làm lên bảng 'student_submissions' trên Supabase
+    const { error } = await supabase.from('student_submissions').insert([{
+      exam_id: examCodeId || "LOCAL_TEST",
+      student_name: studentName,
+      student_class: studentClass,
+      student_school: studentSchool,
+      auto_score: autoScore,
+      answers_data: answers,
+      submitted_at: new Date().toISOString()
+    }]);
+
+    if (error) {
+      console.error("Không thể lưu kết quả lên Cloud:", error.message);
+    }
+
+    setNotice("Bài đã được nộp và lưu lên hệ thống thành công!");
   }
 
   return (
@@ -338,7 +365,7 @@ export default function PhysicsArena() {
             {tab === "matrix" && (
               <div>
                 <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Ma trận & tạo đề</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Chọn số lượng câu và xuất link giao bài cho học sinh.</p></div>
+                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Ma trận & tạo đề</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Chọn số lượng câu và xuất link giao bài cho học sinh lên Supabase.</p></div>
                   <div style={{ display: "flex", gap: "10px" }}>
                     <button onClick={generateExam} style={{ background: "#0d9488", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Tạo đề thi</button>
                     <button onClick={handlePublishAndGetLink} style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>🔗 Xuất link gửi học sinh</button>
@@ -381,34 +408,6 @@ export default function PhysicsArena() {
                           }}
                           style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginBottom: "10px", fontWeight: "600" }} 
                         />
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "8px" }}>
-                          <div>
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "500" }}>Link Video (YouTube/MP4):</label>
-                            <input 
-                              type="text" 
-                              placeholder="https://..." 
-                              value={q.videoUrl || ""} 
-                              onChange={e => {
-                                const val = e.target.value;
-                                setExam(prev => prev.map((item, idx) => idx === i ? { ...item, videoUrl: val } : item));
-                              }}
-                              style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }} 
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "500" }}>Link Âm thanh (MP3):</label>
-                            <input 
-                              type="text" 
-                              placeholder="https://..." 
-                              value={q.audioUrl || ""} 
-                              onChange={e => {
-                                const val = e.target.value;
-                                setExam(prev => prev.map((item, idx) => idx === i ? { ...item, audioUrl: val } : item));
-                              }}
-                              style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }} 
-                            />
-                          </div>
-                        </div>
                       </div>
                     ))}
                   </div>
@@ -425,32 +424,6 @@ export default function PhysicsArena() {
                   <div>Tự luận: <b style={{ color: "#0d9488" }}>{essayTotalScore.toFixed(2)}</b></div>
                   <div>Tổng điểm: <b style={{ color: "#0f766e", fontSize: "16px" }}>{finalScore.toFixed(2)}</b></div>
                 </div>
-                {exam.filter(q => q.section === "ESSAY").map(q => (
-                  <div key={q.id} style={{ border: "1px solid #5eead4", padding: "16px", borderRadius: "10px", marginBottom: "15px", background: "#fff" }}>
-                    <p style={{ fontWeight: "bold", color: "#0f172a" }}>{q.content}</p>
-                    <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", marginBottom: "12px", border: "1px solid #e2e8f0" }}>
-                      <b>Bài làm văn bản:</b> {typeof answers[q.id] === 'object' ? answers[q.id]?.text : (answers[q.id] || "Chưa làm")}
-                      {answers[q.id]?.audioBlob && (
-                        <div style={{ marginTop: "10px" }}>
-                          <b>File ghi âm của học sinh:</b><br />
-                          <audio controls src={URL.createObjectURL(answers[q.id].audioBlob)} style={{ marginTop: "6px" }} />
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                      <label style={{ fontSize: "13px", fontWeight: "600" }}>Cho điểm:</label>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        max={q.points || 1} 
-                        step="0.25" 
-                        value={essayScores[q.id] ?? ""} 
-                        onChange={e => setEssayScores(prev => ({ ...prev, [q.id]: parseFloat(e.target.value) || 0 }))}
-                        style={{ width: "90px", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px" }} 
-                      />
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
 
@@ -460,16 +433,29 @@ export default function PhysicsArena() {
                   <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Thống kê phổ điểm</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Phân tích kết quả kiểm tra KHTN.</p></div>
                   <button onClick={() => window.print()} style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>📥 Xuất báo cáo PDF</button>
                 </div>
-                <div style={{ background: "#f0fdf4", padding: "24px", borderRadius: "10px", border: "1px solid #5eead4", textAlign: "center" }}>
-                  <h3 style={{ color: "#0f766e", fontSize: "20px" }}>Điểm tổng kết học sinh: {finalScore.toFixed(2)} điểm</h3>
-                  <p style={{ color: "#0d9488" }}>Hệ thống đã ghi nhận đầy đủ kết quả trắc nghiệm và tự luận.</p>
-                </div>
               </div>
             )}
           </div>
         </section>
       ) : (
-        <StudentView exam={exam} answers={answers} setAnswers={setAnswers} current={current} setCurrent={setCurrent} seconds={seconds} setSeconds={setSeconds} studentName={studentName} setStudentName={setStudentName} submitExam={submitExam} submitted={submitted} autoScore={autoScore} essayScores={essayScores} />
+        <StudentView 
+          exam={exam} 
+          answers={answers} 
+          setAnswers={setAnswers} 
+          current={current} 
+          setCurrent={setCurrent} 
+          seconds={seconds} 
+          setSeconds={setSeconds} 
+          studentName={studentName} 
+          setStudentName={setStudentName} 
+          studentClass={studentClass}
+          setStudentClass={setStudentClass}
+          studentSchool={studentSchool}
+          setStudentSchool={setStudentSchool}
+          submitExam={submitExam} 
+          submitted={submitted} 
+          autoScore={autoScore} 
+        />
       )}
 
       <footer style={{ textAlign: "center", marginTop: "40px", fontSize: "12px", color: "#0d9488", fontWeight: "600" }}>⚡ Đấu Trường Khoa học Tự nhiên · Giao diện sáng tạo chuyên biệt KHTN</footer>
@@ -477,7 +463,7 @@ export default function PhysicsArena() {
   );
 }
 
-function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, setSeconds, studentName, setStudentName, submitExam, submitted, autoScore }: any) {
+function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, setSeconds, studentName, setStudentName, studentClass, setStudentClass, studentSchool, setStudentSchool, submitExam, submitted, autoScore }: any) {
   const q = exam[current];
   const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -521,21 +507,36 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
     }
   };
 
+  // Màn hình đăng nhập thu thập đủ Tên, Lớp, Trường
   if (!started) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "70vh", padding: "20px", textAlign: "center" }}>
       <h1 style={{ color: "#0f766e", marginBottom: "8px" }}>PHÒNG THI TRỰC TUYẾN KHTN</h1>
-      <p style={{ color: "#64748b", marginBottom: "20px", fontSize: "14px" }}>Nhập thông tin để bắt đầu làm bài kiểm tra Khoa học tự nhiên.</p>
-      <div style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "12px", border: "1px solid #99f6e4", width: "100%", maxWidth: "380px", textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 10px 15px -3px rgba(13, 148, 136, 0.08)" }}>
+      <p style={{ color: "#64748b", marginBottom: "20px", fontSize: "14px" }}>Vui lòng điền đầy đủ thông tin bên dưới để bắt đầu làm bài.</p>
+      <div style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "12px", border: "1px solid #99f6e4", width: "100%", maxWidth: "400px", textAlign: "left", display: "flex", flexDirection: "column", gap: "12px", boxShadow: "0 10px 15px -3px rgba(13, 148, 136, 0.08)" }}>
         <div>
           <label style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e" }}>Họ và tên học sinh:</label>
-          <input type="text" placeholder="Nguyễn Văn A" value={studentName} onChange={e => setStudentName(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "6px", outline: "none" }} />
+          <input type="text" placeholder="Nguyễn Văn A" value={studentName} onChange={e => setStudentName(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "4px", outline: "none" }} />
         </div>
-        <button onClick={() => { if (!studentName.trim()) { alert("Vui lòng nhập tên!"); return; } setStarted(true); }} style={{ width: "100%", padding: "12px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(13, 148, 136, 0.2)" }}>🚀 Bắt đầu làm bài</button>
+        <div>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e" }}>Lớp:</label>
+          <input type="text" placeholder="Ví dụ: 7A1" value={studentClass} onChange={e => setStudentClass(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "4px", outline: "none" }} />
+        </div>
+        <div>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e" }}>Trường:</label>
+          <input type="text" placeholder="Ví dụ: THCS Phú Xuân" value={studentSchool} onChange={e => setStudentSchool(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "4px", outline: "none" }} />
+        </div>
+        <button onClick={() => { 
+          if (!studentName.trim() || !studentClass.trim() || !studentSchool.trim()) { 
+            alert("Vui lòng điền đầy đủ Họ tên, Lớp và Trường!"); 
+            return; 
+          } 
+          setStarted(true); 
+        }} style={{ width: "100%", padding: "12px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", marginTop: "8px", boxShadow: "0 4px 6px -1px rgba(13, 148, 136, 0.2)" }}>🚀 Bắt đầu làm bài</button>
       </div>
     </div>
   );
 
-  if (!exam.length) return <div style={{ textAlign: "center", padding: "40px" }}>Đang tải đề thi...</div>;
+  if (!exam.length) return <div style={{ textAlign: "center", padding: "40px" }}>Đang tải đề thi từ hệ thống Supabase...</div>;
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
@@ -544,7 +545,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
     return (
       <div style={{ maxWidth: "700px", margin: "40px auto", background: "#fff", padding: "30px", borderRadius: "12px", border: "1px solid #99f6e4", textAlign: "center", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
         <h2 style={{ color: "#0f766e" }}>🎉 ĐÃ NỘP BÀI THÀNH CÔNG!</h2>
-        <p style={{ color: "#334155" }}>Học sinh: <b>{studentName}</b></p>
+        <p style={{ color: "#334155" }}>Học sinh: <b>{studentName}</b> - Lớp: <b>{studentClass}</b> - Trường: <b>{studentSchool}</b></p>
         <div style={{ background: "#f0fdf4", border: "1px solid #99f6e4", padding: "20px", borderRadius: "8px", marginTop: "20px" }}>
           Điểm trắc nghiệm tự động: <b style={{ color: "#0d9488", fontSize: "20px" }}>{autoScore.toFixed(2)} điểm</b>
         </div>
@@ -555,7 +556,7 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
   return (
     <div style={{ maxWidth: "950px", margin: "20px auto", background: "#fff", borderRadius: "12px", border: "1px solid #99f6e4", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px", background: "#f0fdf4", borderBottom: "1px solid #99f6e4" }}>
-        <div>Học sinh: <b style={{ color: "#0f766e" }}>{studentName}</b></div>
+        <div>Học sinh: <b style={{ color: "#0f766e" }}>{studentName}</b> ({studentClass} - {studentSchool})</div>
         <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
           <div style={{ fontWeight: "700", color: seconds < 60 ? "#dc2626" : "#0f766e", background: "#fff", padding: "6px 12px", borderRadius: "6px", border: "1px solid #5eead4" }}>⏱️ {mm}:{ss}</div>
           <button onClick={() => { if (confirm("Bạn có chắc chắn muốn nộp bài?")) submitExam(); }} style={{ background: "#0d9488", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }}>Nộp bài</button>
@@ -590,7 +591,6 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
           {q.section === "ESSAY" && (
             <div>
               <textarea 
-                id="student-essay-textarea"
                 rows={6}
                 placeholder="Nhập bài làm tự luận của bạn..."
                 value={typeof answers[q.id] === 'object' ? (answers[q.id]?.text || "") : (answers[q.id] || "")}
