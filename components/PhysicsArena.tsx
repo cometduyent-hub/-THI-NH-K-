@@ -1,8 +1,11 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState, Suspense } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
+import { useSearchParams } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -194,7 +197,7 @@ function parseRow(r: Record<string, any>): Question {
   };
 }
 
-export default function PhysicsArena() {
+function PhysicsArenaContent() {
   const [mode, setMode] = useState<"teacher" | "student">("teacher");
   const [tab, setTab] = useState<"bank" | "matrix" | "exam" | "grading" | "stats">("bank");
   const [questions, setQuestions] = useState<Question[]>(seed);
@@ -212,6 +215,7 @@ export default function PhysicsArena() {
   const [seconds, setSeconds] = useState(45 * 60);
   const [essayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
+  const searchParams = useMemo(() => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''), []);
 
   useEffect(() => {
     if (mode === "student" && exam.length > 0 && !submitted) {
@@ -230,8 +234,7 @@ export default function PhysicsArena() {
   }, [mode, exam, submitted]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const examId = params.get("exam");
+    const examId = searchParams.get("exam");
     if (examId) {
       setMode("student");
       setExamCodeId(examId);
@@ -250,7 +253,7 @@ export default function PhysicsArena() {
       }
       fetchExamFromCloud();
     }
-  }, []);
+  }, [searchParams]);
 
   const autoScore = useMemo(() => {
     return exam.reduce((s, q) => {
@@ -765,5 +768,13 @@ export default function PhysicsArena() {
         </section>
       )}
     </main>
+  );
+}
+
+export default function PhysicsArena() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: "center", padding: "50px", fontWeight: "bold", color: "#0f766e" }}>Đang tải ứng dụng...</div>}>
+      <PhysicsArenaContent />
+    </Suspense>
   );
 }
