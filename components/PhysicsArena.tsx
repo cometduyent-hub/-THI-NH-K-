@@ -38,10 +38,10 @@ type Question = {
 };
 
 type Matrix = {
-  MCQ: { NB: number; TH: number; VD: number; VDC: number };
-  TF: { NB: number; TH: number; VD: number; VDC: number };
-  SHORT: { NB: number; TH: number; VD: number; VDC: number };
-  ESSAY: { NB: number; TH: number; VD: number; VDC: number };
+  MCQ: Record<Difficulty, number>;
+  TF: Record<Difficulty, number>;
+  SHORT: Record<Difficulty, number>;
+  ESSAY: Record<Difficulty, number>;
 };
 
 const seed: Question[] = [
@@ -122,13 +122,13 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function shuffleExamSections(questionList: Question[]) {
+function shuffleExamSections(questionList: Question[]): Question[] {
   const mcq = questionList.filter(q => q.section === "MCQ");
   const tf = questionList.filter(q => q.section === "TF");
   const short = questionList.filter(q => q.section === "SHORT");
   const essay = questionList.filter(q => q.section === "ESSAY");
 
-  const shuffleArray = (arr: any[]) => {
+  const shuffleArray = <T,>(arr: T[]): T[] => {
     const shuffled = [...arr];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -163,7 +163,7 @@ function scoreTF(userAns: Record<string, boolean> | undefined, subTfs: SubTFItem
   return Math.max(0, totalPoint - deduction);
 }
 
-function parseRow(r: any): Question {
+function parseRow(r: Record<string, any>): Question {
   const section = String(r.section || "MCQ").toUpperCase() as Section;
   const options = ["A", "B", "C", "D"].map(k => ({ key: k, text: String(r[`option${k}`] ?? r[`option_${k.toLowerCase()}`] ?? "") })).filter(x => x.text);
   
@@ -179,7 +179,7 @@ function parseRow(r: any): Question {
     section,
     subject: String(r.subject || "Khoa học tự nhiên"),
     grade: String(r.grade || "7"),
-    topic: String(r.topic || "Chưa phân loại"),
+    topic: String(r.topic || "Chủ đề mới"),
     difficulty: (String(r.difficulty || "TH").toUpperCase() as Difficulty),
     content: String(r.content || ""),
     videoUrl: String(r.videoUrl || "") || undefined,
@@ -201,9 +201,8 @@ export default function PhysicsArena() {
   const [matrix, setMatrix] = useState<Matrix>(defaultMatrix);
   const [examMinutes, setExamMinutes] = useState<number>(45); 
   const [exam, setExam] = useState<Question[]>([]);
-  const [examCodeId, setExamCodeId] = useState<string>("");
+  const [, setExamCodeId] = useState<string>("");
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [, setCurrent] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   
   const [studentName, setStudentName] = useState("");
@@ -211,7 +210,7 @@ export default function PhysicsArena() {
   const [studentSchool, setStudentSchool] = useState("");
 
   const [seconds, setSeconds] = useState(45 * 60);
-  const [essayScores, setEssayScores] = useState<Record<string, number>>({});
+  const [essayScores] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -239,7 +238,7 @@ export default function PhysicsArena() {
       async function fetchExamFromCloud() {
         const { data } = await supabase.from('exams').select('questions_data, duration').eq('id', examId).single();
         if (data && data.questions_data) {
-          setExam(data.questions_data);
+          setExam(data.questions_data as Question[]);
           if (data.duration) {
             setExamMinutes(data.duration);
             setSeconds(data.duration * 60);
@@ -282,8 +281,6 @@ export default function PhysicsArena() {
     const randomized = shuffleExamSections(selected);
     setExam(randomized);
     setAnswers({});
-    setEssayScores({});
-    setCurrent(0);
     setSubmitted(false);
     setSeconds(examMinutes * 60);
     setTab("exam");
@@ -321,7 +318,7 @@ export default function PhysicsArena() {
     reader.onload = (ev) => {
       try {
         const data = ev.target?.result;
-        let rows: any[] = [];
+        let rows: Record<string, any>[] = [];
         if (file.name.endsWith(".json")) rows = JSON.parse(String(data));
         else {
           const wb = XLSX.read(data, { type: "array" });
@@ -342,7 +339,7 @@ export default function PhysicsArena() {
     setTab("grading");
 
     const { error } = await supabase.from('student_submissions').insert([{
-      exam_id: examCodeId || "LOCAL_TEST",
+      exam_id: "LOCAL_TEST",
       student_name: studentName,
       student_class: studentClass,
       student_school: studentSchool,
@@ -397,7 +394,7 @@ export default function PhysicsArena() {
               else if (pass !== null) alert("Sai mật khẩu!");
             }} style={{ padding: "8px 14px", background: "#f0fdf4", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "700", color: "#0f766e" }}>🔒 Giáo viên</button>
           )}
-          <button className={mode === "student" ? "active" : ""} onClick={() => setMode("student")} style={{ padding: "8px 14px", background: mode === "student" ? "#0d9488" : "#f0fdf4", color: mode === "student" ? "#fff" : "#0f766e", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>👨‍🎓 Học sinh</button>
+          <button onClick={() => setMode("student")} style={{ padding: "8px 14px", background: mode === "student" ? "#0d9488" : "#f0fdf4", color: mode === "student" ? "#fff" : "#0f766e", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>👨‍🎓 Học sinh</button>
         </div>
       </header>
 
@@ -414,7 +411,7 @@ export default function PhysicsArena() {
               ["grading", "✍️", "Chấm bài tự luận"],
               ["stats", "📊", "Thống kê phổ điểm"]
             ].map(([id, icon, label]) => (
-              <button key={id} className={tab === id ? "nav active" : "nav"} onClick={() => setTab(id as any)} style={{ width: "100%", textAlign: "left", padding: "12px 14px", background: tab === id ? "#ccfbf1" : "transparent", color: tab === id ? "#115e59" : "#334155", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: tab === id ? "700" : "500", display: "flex", gap: "10px", marginBottom: "6px", transition: "all 0.2s" }}>
+              <button key={id} onClick={() => setTab(id as any)} style={{ width: "100%", textAlign: "left", padding: "12px 14px", background: tab === id ? "#ccfbf1" : "transparent", color: tab === id ? "#115e59" : "#334155", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: tab === id ? "700" : "500", display: "flex", gap: "10px", marginBottom: "6px", transition: "all 0.2s" }}>
                 <span>{icon}</span>{label}
               </button>
             ))}
@@ -426,7 +423,7 @@ export default function PhysicsArena() {
                 <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                   <div><h2 style={{ fontSize: "20px", margin: 0, color: "#0f766e" }}>Ngân hàng câu hỏi KHTN</h2><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Quản lý câu hỏi, tích hợp đầy đủ file ảnh, video và bản ghi âm.</p></div>
                   <div style={{ display: "flex", gap: "10px" }}>
-                    <label className="primary-btn" style={{ background: "#0d9488", color: "#fff", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>📥 Nhập file Excel/JSON
+                    <label style={{ background: "#0d9488", color: "#fff", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>📥 Nhập file Excel/JSON
                       <input hidden type="file" accept=".xlsx,.csv,.json" onChange={importFile} />
                     </label>
                     <button style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }} onClick={() => {
@@ -453,7 +450,7 @@ export default function PhysicsArena() {
                         <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>ID</th>
                         <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>Phần</th>
                         <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>Nội dung</th>
-                        <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>Media (Ảnh / Video / Audio)</th>
+                        <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>Media</th>
                         <th style={{ padding: "10px", border: "1px solid #cbd5e1" }}>Xóa</th>
                       </tr>
                     </thead>
@@ -541,7 +538,7 @@ export default function PhysicsArena() {
                             <label style={{ fontSize: "11px", fontWeight: "600", color: "#0284c7" }}>🖼️ Link Ảnh minh họa:</label>
                             <input 
                               type="text" 
-                              placeholder="https://... image.png" 
+                              placeholder="https://..." 
                               value={q.imageUrl || ""} 
                               onChange={e => {
                                 const val = e.target.value;
@@ -551,10 +548,10 @@ export default function PhysicsArena() {
                             />
                           </div>
                           <div>
-                            <label style={{ fontSize: "11px", fontWeight: "600", color: "#7c3aed" }}>🎥 Link Video (Nghe):</label>
+                            <label style={{ fontSize: "11px", fontWeight: "600", color: "#7c3aed" }}>🎥 Link Video:</label>
                             <input 
                               type="text" 
-                              placeholder="https://... video.mp4" 
+                              placeholder="https://..." 
                               value={q.videoUrl || ""} 
                               onChange={e => {
                                 const val = e.target.value;
@@ -564,10 +561,10 @@ export default function PhysicsArena() {
                             />
                           </div>
                           <div>
-                            <label style={{ fontSize: "11px", fontWeight: "600", color: "#059669" }}>🔊 Link Bản ghi âm (Audio):</label>
+                            <label style={{ fontSize: "11px", fontWeight: "600", color: "#059669" }}>🔊 Link Audio:</label>
                             <input 
                               type="text" 
-                              placeholder="https://... audio.mp3" 
+                              placeholder="https://..." 
                               value={q.audioUrl || ""} 
                               onChange={e => {
                                 const val = e.target.value;
@@ -580,7 +577,7 @@ export default function PhysicsArena() {
 
                         {q.section === "TF" && q.subTfs && (
                           <div style={{ marginTop: "12px", background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-                            <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e", marginBottom: "6px" }}>Cấu hình 4 ý (a, b, c, d) & Mức độ riêng:</div>
+                            <div style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e", marginBottom: "6px" }}>Cấu hình 4 ý (a, b, c, d):</div>
                             {q.subTfs.map((sub, sIdx) => (
                               <div key={sub.id} style={{ display: "grid", gridTemplateColumns: "30px 1fr 100px 90px", gap: "8px", alignItems: "center", marginBottom: "6px" }}>
                                 <b style={{ color: "#0284c7" }}>{sub.id.toUpperCase()}.</b>
@@ -638,10 +635,9 @@ export default function PhysicsArena() {
             {tab === "grading" && (
               <div>
                 <h2 style={{ fontSize: "20px", color: "#0f766e", marginBottom: "10px" }}>Chấm bài & Tổng kết điểm</h2>
-                <p style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>Xem kết quả tự động chấm và nhập điểm tự luận cho học sinh.</p>
+                <p style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>Xem kết quả tự động chấm điểm cho học sinh.</p>
                 <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
                   <div style={{ fontSize: "16px", fontWeight: "700", color: "#0f766e", marginBottom: "10px" }}>Điểm hệ thống tự chấm: {autoScore.toFixed(2)}</div>
-                  <div style={{ fontSize: "16px", fontWeight: "700", color: "#0284c7", marginBottom: "10px" }}>Điểm tự luận: {essayTotalScore.toFixed(2)}</div>
                   <div style={{ fontSize: "18px", fontWeight: "900", color: "#047857" }}>Tổng điểm bài thi: {finalScore.toFixed(2)}</div>
                 </div>
               </div>
@@ -732,7 +728,7 @@ export default function PhysicsArena() {
                       {q.section === "SHORT" && (
                         <input 
                           type="text" 
-                          placeholder="Nhập câu trả lời ngắn của bạn..."
+                          placeholder="Nhập câu trả lời ngắn..."
                           value={answers[q.id] || ""}
                           onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
                           style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "6px" }}
@@ -742,7 +738,7 @@ export default function PhysicsArena() {
                       {q.section === "ESSAY" && (
                         <textarea 
                           rows={3}
-                          placeholder="Trình bày bài làm tự luận của bạn..."
+                          placeholder="Trình bày bài làm tự luận..."
                           value={answers[q.id] || ""}
                           onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
                           style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "6px" }}
