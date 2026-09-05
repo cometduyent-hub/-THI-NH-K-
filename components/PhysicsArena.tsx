@@ -233,36 +233,36 @@ export default function PhysicsArena() {
   return (
     <main className="app-shell" style={{ 
       fontFamily: "Inter, system-ui, Arial, sans-serif", 
-      background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%)", 
+      background: "linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #ccfbf1 100%)", 
       minHeight: "100vh", 
       paddingBottom: "40px",
-      color: "#1e293b"
+      color: "#0f172a"
     }}>
-      <header className="topbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 28px", background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(10px)", borderBottom: "1px solid #d1fae5", boxShadow: "0 4px 6px -1px rgba(16, 185, 129, 0.05)" }}>
+      <header className="topbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 28px", background: "rgba(255, 255, 255, 0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid #99f6e4", boxShadow: "0 4px 12px -2px rgba(13, 148, 136, 0.08)" }}>
         <div className="brand" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span className="atom" style={{ fontSize: "28px", background: "#dcfce7", padding: "6px 10px", borderRadius: "12px", border: "1px solid #86efac" }}>🧬</span>
-          <div><b style={{ fontSize: "18px", color: "#065f46", letterSpacing: "0.5px" }}>ĐẤU TRƯỜNG KHOA HỌC TỰ NHIÊN</b><div style={{ fontSize: "12px", color: "#047857", fontWeight: "500" }}>Hệ thống quản lý ôn tập & kiểm tra trực tuyến</div></div>
+          <span className="atom" style={{ fontSize: "28px", background: "#ccfbf1", padding: "6px 10px", borderRadius: "12px", border: "1px solid #2dd4bf" }}>🔬</span>
+          <div><b style={{ fontSize: "18px", color: "#0f766e", letterSpacing: "0.5px" }}>ĐẤU TRƯỜNG KHOA HỌC TỰ NHIÊN</b><div style={{ fontSize: "12px", color: "#0d9488", fontWeight: "600" }}>Hệ thống quản lý ôn tập & kiểm tra trực tuyến tích hợp KHTN</div></div>
         </div>
         <div className="top-actions" style={{ display: "flex", gap: "10px" }}>
           {mode === "teacher" ? (
-            <button onClick={() => setMode("student")} style={{ padding: "8px 14px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#047857" }}>🔓 Thoát quyền GV</button>
+            <button onClick={() => setMode("student")} style={{ padding: "8px 14px", background: "#f0fdf4", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#0f766e" }}>🔓 Thoát quyền GV</button>
           ) : (
             <button onClick={() => {
               const pass = prompt("Nhập mật khẩu giáo viên:");
               if (pass === "123456") setMode("teacher");
               else if (pass !== null) alert("Sai mật khẩu!");
-            }} style={{ padding: "8px 14px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#047857" }}>🔒 Giáo viên</button>
+            }} style={{ padding: "8px 14px", background: "#f0fdf4", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#0f766e" }}>🔒 Giáo viên</button>
           )}
-          <button className={mode === "student" ? "active" : ""} onClick={() => setMode("student")} style={{ padding: "8px 14px", background: mode === "student" ? "#059669" : "#f0fdf4", color: mode === "student" ? "#fff" : "#047857", border: "1px solid #86efac", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>👨‍🎓 Học sinh</button>
+          <button className={mode === "student" ? "active" : ""} onClick={() => setMode("student")} style={{ padding: "8px 14px", background: mode === "student" ? "#0d9488" : "#f0fdf4", color: mode === "student" ? "#fff" : "#0f766e", border: "1px solid #5eead4", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>👨‍🎓 Học sinh</button>
         </div>
       </header>
 
-      {notice && <div className="notice" style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "12px 24px", margin: "20px 28px", borderRadius: "10px", color: "#065f46", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}><span>{notice}</span><button onClick={() => setNotice("")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#047857" }}>×</button></div>}
+      {notice && <div className="notice" style={{ background: "#f0fdf4", border: "1px solid #5eead4", padding: "12px 24px", margin: "20px 28px", borderRadius: "10px", color: "#115e59", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}><span>{notice}</span><button onClick={() => setNotice("")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "#0f766e" }}>×</button></div>}
 
       {mode === "teacher" ? (
         <section className="workspace" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "24px", padding: "0 28px", marginTop: "24px" }}>
-          <aside className="sidebar" style={{ background: "rgba(255, 255, 255, 0.95)", padding: "18px", borderRadius: "14px", border: "1px solid #a7f3d0", height: "fit-content", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
-            <div className="side-title" style={{ fontSize: "11px", fontWeight: "700", color: "#059669", marginBottom: "12px", letterSpacing: "1px" }}>BẢNG ĐIỀU KHIỂN KHTN</div>
+          <aside className="sidebar" style={{ background: "rgba(255, 255, 255, 0.95)", padding: "18px", borderRadius: "14px", border: "1px solid #99f6e4", height: "fit-content", boxShadow: "0 4px 12px -2px rgba(13, 148, 136, 0.05)" }}>
+            <div className="side-title" style={{ fontSize: "11px", fontWeight: "700", color: "#0d9488", marginBottom: "12px", letterSpacing: "1px" }}>BẢNG ĐIỀU KHIỂN KHTN</div>
             {[
               ["bank", "📚", "Ngân hàng câu hỏi"],
               ["matrix", "🧩", "Ma trận & tạo đề"],
@@ -270,22 +270,22 @@ export default function PhysicsArena() {
               ["grading", "✍️", "Chấm bài tự luận"],
               ["stats", "📊", "Thống kê phổ điểm"]
             ].map(([id, icon, label]) => (
-              <button key={id} className={tab === id ? "nav active" : "nav"} onClick={() => setTab(id as any)} style={{ width: "100%", textAlign: "left", padding: "12px 14px", background: tab === id ? "#d1fae5" : "transparent", color: tab === id ? "#065f46" : "#334155", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: tab === id ? "700" : "500", display: "flex", gap: "10px", marginBottom: "6px", transition: "all 0.2s" }}>
+              <button key={id} className={tab === id ? "nav active" : "nav"} onClick={() => setTab(id as any)} style={{ width: "100%", textAlign: "left", padding: "12px 14px", background: tab === id ? "#ccfbf1" : "transparent", color: tab === id ? "#115e59" : "#334155", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: tab === id ? "700" : "500", display: "flex", gap: "10px", marginBottom: "6px", transition: "all 0.2s" }}>
                 <span>{icon}</span>{label}
               </button>
             ))}
           </aside>
 
-          <div className="content" style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "14px", border: "1px solid #a7f3d0", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)" }}>
+          <div className="content" style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "14px", border: "1px solid #99f6e4", boxShadow: "0 4px 12px -2px rgba(13, 148, 136, 0.05)" }}>
             {tab === "bank" && (
               <div>
                 <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#065f46" }}>Ngân hàng câu hỏi KHTN</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Quản lý chung câu hỏi Vật lí, Hóa học, Sinh học và tích hợp media.</p></div>
+                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Ngân hàng câu hỏi KHTN</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Quản lý chung câu hỏi Vật lí, Hóa học, Sinh học và tích hợp media.</p></div>
                   <div style={{ display: "flex", gap: "10px" }}>
-                    <label className="primary-btn" style={{ background: "#059669", color: "#fff", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>📥 Nhập file Excel/JSON
+                    <label className="primary-btn" style={{ background: "#0d9488", color: "#fff", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "6px" }}>📥 Nhập file Excel/JSON
                       <input hidden type="file" accept=".xlsx,.csv,.json" onChange={importFile} />
                     </label>
-                    <button style={{ background: "#2563eb", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }} onClick={() => {
+                    <button style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }} onClick={() => {
                       const newQ: Question = {
                         id: "KHTN_" + Date.now(),
                         section: "MCQ",
@@ -305,12 +305,12 @@ export default function PhysicsArena() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
-                      <tr style={{ background: "#ecfdf5", textAlign: "left", color: "#065f46" }}>
-                        <th style={{ padding: "10px", border: "1px solid #a7f3d0" }}>ID</th>
-                        <th style={{ padding: "10px", border: "1px solid #a7f3d0" }}>Phần</th>
-                        <th style={{ padding: "10px", border: "1px solid #a7f3d0" }}>Nội dung</th>
-                        <th style={{ padding: "10px", border: "1px solid #a7f3d0" }}>Media đính kèm</th>
-                        <th style={{ padding: "10px", border: "1px solid #a7f3d0" }}>Xóa</th>
+                      <tr style={{ background: "#f0fdf4", textAlign: "left", color: "#0f766e" }}>
+                        <th style={{ padding: "10px", border: "1px solid #99f6e4" }}>ID</th>
+                        <th style={{ padding: "10px", border: "1px solid #99f6e4" }}>Phần</th>
+                        <th style={{ padding: "10px", border: "1px solid #99f6e4" }}>Nội dung</th>
+                        <th style={{ padding: "10px", border: "1px solid #99f6e4" }}>Media đính kèm</th>
+                        <th style={{ padding: "10px", border: "1px solid #99f6e4" }}>Xóa</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -320,8 +320,8 @@ export default function PhysicsArena() {
                           <td style={{ padding: "10px", border: "1px solid #cbd5e1" }}>{sectionLabel[q.section]}</td>
                           <td style={{ padding: "10px", border: "1px solid #cbd5e1" }}>{q.content}</td>
                           <td style={{ padding: "10px", border: "1px solid #cbd5e1" }}>
-                            {q.videoUrl && <span style={{ color: "#2563eb", marginRight: "8px" }}>🎥 Có video</span>}
-                            {q.audioUrl && <span style={{ color: "#16a34a" }}>🔊 Có âm thanh</span>}
+                            {q.videoUrl && <span style={{ color: "#0284c7", marginRight: "8px" }}>🎥 Có video</span>}
+                            {q.audioUrl && <span style={{ color: "#0d9488" }}>🔊 Có âm thanh</span>}
                             {!q.videoUrl && !q.audioUrl && <span style={{ color: "#94a3b8" }}>Không có</span>}
                           </td>
                           <td style={{ padding: "10px", border: "1px solid #cbd5e1" }}>
@@ -338,19 +338,19 @@ export default function PhysicsArena() {
             {tab === "matrix" && (
               <div>
                 <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#065f46" }}>Ma trận & tạo đề</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Chọn số lượng câu và xuất link giao bài cho học sinh.</p></div>
+                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Ma trận & tạo đề</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Chọn số lượng câu và xuất link giao bài cho học sinh.</p></div>
                   <div style={{ display: "flex", gap: "10px" }}>
-                    <button onClick={generateExam} style={{ background: "#059669", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Tạo đề thi</button>
-                    <button onClick={handlePublishAndGetLink} style={{ background: "#2563eb", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>🔗 Xuất link gửi học sinh</button>
+                    <button onClick={generateExam} style={{ background: "#0d9488", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Tạo đề thi</button>
+                    <button onClick={handlePublishAndGetLink} style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>🔗 Xuất link gửi học sinh</button>
                   </div>
                 </div>
                 {(Object.keys(matrix) as Section[]).map(sec => (
-                  <div key={sec} style={{ display: "grid", gridTemplateColumns: "220px repeat(4, 1fr)", gap: "12px", alignItems: "center", marginBottom: "12px", background: "#f0fdf4", padding: "12px", borderRadius: "8px", border: "1px solid #d1fae5" }}>
-                    <strong style={{ color: "#065f46" }}>{sectionLabel[sec]}</strong>
+                  <div key={sec} style={{ display: "grid", gridTemplateColumns: "220px repeat(4, 1fr)", gap: "12px", alignItems: "center", marginBottom: "12px", background: "#f0fdf4", padding: "12px", borderRadius: "8px", border: "1px solid #99f6e4" }}>
+                    <strong style={{ color: "#0f766e" }}>{sectionLabel[sec]}</strong>
                     {(["NB", "TH", "VD", "VDC"] as Difficulty[]).map(d => (
                       <div key={d} style={{ display: "flex", flexDirection: "column" }}>
-                        <label style={{ fontSize: "11px", color: "#047857", fontWeight: "600" }}>{diffLabel[d]}</label>
-                        <input type="number" min="0" value={matrix[sec][d]} onChange={e => updateMatrix(sec, d, Number(e.target.value))} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #a7f3d0", background: "#fff" }} />
+                        <label style={{ fontSize: "11px", color: "#0d9488", fontWeight: "600" }}>{diffLabel[d]}</label>
+                        <input type="number" min="0" value={matrix[sec][d]} onChange={e => updateMatrix(sec, d, Number(e.target.value))} style={{ padding: "8px", borderRadius: "6px", border: "1px solid #5eead4", background: "#fff" }} />
                       </div>
                     ))}
                   </div>
@@ -361,16 +361,16 @@ export default function PhysicsArena() {
             {tab === "exam" && (
               <div>
                 <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#065f46" }}>Xem & Chỉnh sửa đề thi hiện tại</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Thầy có thể sửa trực tiếp nội dung câu hỏi, link media hoặc đáp án nếu chưa phù hợp.</p></div>
-                  <button onClick={generateExam} style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#065f46" }}>🔄 Tạo đề mới</button>
+                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Xem & Chỉnh sửa đề thi hiện tại</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Thầy có thể sửa trực tiếp nội dung câu hỏi, link media hoặc đáp án nếu chưa phù hợp.</p></div>
+                  <button onClick={generateExam} style={{ background: "#f0fdf4", border: "1px solid #5eead4", padding: "8px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#0f766e" }}>🔄 Tạo đề mới</button>
                 </div>
                 {exam.length === 0 ? <div style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>Chưa có đề. Vui lòng vào Ma trận & tạo đề.</div> : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                     {exam.map((q, i) => (
-                      <div key={q.id} style={{ border: "1px solid #a7f3d0", padding: "16px", borderRadius: "10px", background: "#fdfefe" }}>
+                      <div key={q.id} style={{ border: "1px solid #5eead4", padding: "16px", borderRadius: "10px", background: "#fdfefe" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                          <span style={{ fontWeight: "700", color: "#059669" }}>Câu {i + 1} ({q.section})</span>
-                          <span style={{ fontSize: "12px", background: "#ecfdf5", color: "#065f46", padding: "2px 8px", borderRadius: "4px", border: "1px solid #a7f3d0" }}>Điểm: {q.points}</span>
+                          <span style={{ fontWeight: "700", color: "#0d9488" }}>Câu {i + 1} ({q.section})</span>
+                          <span style={{ fontSize: "12px", background: "#f0fdf4", color: "#0f766e", padding: "2px 8px", borderRadius: "4px", border: "1px solid #5eead4" }}>Điểm: {q.points}</span>
                         </div>
                         <input 
                           type="text" 
@@ -418,16 +418,16 @@ export default function PhysicsArena() {
 
             {tab === "grading" && (
               <div>
-                <h1 style={{ fontSize: "22px", marginBottom: "5px", color: "#065f46" }}>Chấm bài học sinh</h1>
+                <h1 style={{ fontSize: "22px", marginBottom: "5px", color: "#0f766e" }}>Chấm bài học sinh</h1>
                 <p style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>Tổng điểm tự động + Chấm tự luận thủ công.</p>
-                <div style={{ display: "flex", gap: "20px", background: "#f0fdf4", padding: "16px", borderRadius: "10px", border: "1px solid #a7f3d0", marginBottom: "20px" }}>
-                  <div>Trắc nghiệm: <b style={{ color: "#059669" }}>{autoScore.toFixed(2)}</b></div>
-                  <div>Tự luận: <b style={{ color: "#059669" }}>{essayTotalScore.toFixed(2)}</b></div>
-                  <div>Tổng điểm: <b style={{ color: "#047857", fontSize: "16px" }}>{finalScore.toFixed(2)}</b></div>
+                <div style={{ display: "flex", gap: "20px", background: "#f0fdf4", padding: "16px", borderRadius: "10px", border: "1px solid #5eead4", marginBottom: "20px" }}>
+                  <div>Trắc nghiệm: <b style={{ color: "#0d9488" }}>{autoScore.toFixed(2)}</b></div>
+                  <div>Tự luận: <b style={{ color: "#0d9488" }}>{essayTotalScore.toFixed(2)}</b></div>
+                  <div>Tổng điểm: <b style={{ color: "#0f766e", fontSize: "16px" }}>{finalScore.toFixed(2)}</b></div>
                 </div>
                 {exam.filter(q => q.section === "ESSAY").map(q => (
-                  <div key={q.id} style={{ border: "1px solid #a7f3d0", padding: "16px", borderRadius: "10px", marginBottom: "15px", background: "#fff" }}>
-                    <p style={{ fontWeight: "bold", color: "#1e293b" }}>{q.content}</p>
+                  <div key={q.id} style={{ border: "1px solid #5eead4", padding: "16px", borderRadius: "10px", marginBottom: "15px", background: "#fff" }}>
+                    <p style={{ fontWeight: "bold", color: "#0f172a" }}>{q.content}</p>
                     <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", marginBottom: "12px", border: "1px solid #e2e8f0" }}>
                       <b>Bài làm văn bản:</b> {typeof answers[q.id] === 'object' ? answers[q.id]?.text : (answers[q.id] || "Chưa làm")}
                       {answers[q.id]?.audioBlob && (
@@ -457,12 +457,12 @@ export default function PhysicsArena() {
             {tab === "stats" && (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#065f46" }}>Thống kê phổ điểm</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Phân tích kết quả kiểm tra KHTN.</p></div>
+                  <div><h1 style={{ fontSize: "22px", margin: 0, color: "#0f766e" }}>Thống kê phổ điểm</h1><p style={{ color: "#64748b", margin: 0, fontSize: "13px" }}>Phân tích kết quả kiểm tra KHTN.</p></div>
                   <button onClick={() => window.print()} style={{ background: "#0284c7", color: "#fff", border: "none", padding: "10px 16px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>📥 Xuất báo cáo PDF</button>
                 </div>
-                <div style={{ background: "#f0fdf4", padding: "24px", borderRadius: "10px", border: "1px solid #a7f3d0", textAlign: "center" }}>
-                  <h3 style={{ color: "#065f46", fontSize: "20px" }}>Điểm tổng kết học sinh: {finalScore.toFixed(2)} điểm</h3>
-                  <p style={{ color: "#047857" }}>Hệ thống đã ghi nhận đầy đủ kết quả trắc nghiệm và tự luận.</p>
+                <div style={{ background: "#f0fdf4", padding: "24px", borderRadius: "10px", border: "1px solid #5eead4", textAlign: "center" }}>
+                  <h3 style={{ color: "#0f766e", fontSize: "20px" }}>Điểm tổng kết học sinh: {finalScore.toFixed(2)} điểm</h3>
+                  <p style={{ color: "#0d9488" }}>Hệ thống đã ghi nhận đầy đủ kết quả trắc nghiệm và tự luận.</p>
                 </div>
               </div>
             )}
@@ -472,7 +472,7 @@ export default function PhysicsArena() {
         <StudentView exam={exam} answers={answers} setAnswers={setAnswers} current={current} setCurrent={setCurrent} seconds={seconds} setSeconds={setSeconds} studentName={studentName} setStudentName={setStudentName} submitExam={submitExam} submitted={submitted} autoScore={autoScore} essayScores={essayScores} />
       )}
 
-      <footer style={{ textAlign: "center", marginTop: "40px", fontSize: "12px", color: "#047857", fontWeight: "500" }}>⚡ Đấu Trường Khoa học Tự nhiên · Giao diện sáng tạo chuyên biệt KHTN</footer>
+      <footer style={{ textAlign: "center", marginTop: "40px", fontSize: "12px", color: "#0d9488", fontWeight: "600" }}>⚡ Đấu Trường Khoa học Tự nhiên · Giao diện sáng tạo chuyên biệt KHTN</footer>
     </main>
   );
 }
@@ -523,14 +523,14 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
 
   if (!started) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "70vh", padding: "20px", textAlign: "center" }}>
-      <h1 style={{ color: "#065f46", marginBottom: "8px" }}>PHÒNG THI TRỰC TUYẾN KHTN</h1>
+      <h1 style={{ color: "#0f766e", marginBottom: "8px" }}>PHÒNG THI TRỰC TUYẾN KHTN</h1>
       <p style={{ color: "#64748b", marginBottom: "20px", fontSize: "14px" }}>Nhập thông tin để bắt đầu làm bài kiểm tra Khoa học tự nhiên.</p>
-      <div style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "12px", border: "1px solid #a7f3d0", width: "100%", maxWidth: "380px", textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 10px 15px -3px rgba(16, 185, 129, 0.05)" }}>
+      <div style={{ background: "rgba(255, 255, 255, 0.95)", padding: "24px", borderRadius: "12px", border: "1px solid #99f6e4", width: "100%", maxWidth: "380px", textAlign: "left", display: "flex", flexDirection: "column", gap: "14px", boxShadow: "0 10px 15px -3px rgba(13, 148, 136, 0.08)" }}>
         <div>
-          <label style={{ fontSize: "12px", fontWeight: "700", color: "#065f46" }}>Họ và tên học sinh:</label>
+          <label style={{ fontSize: "12px", fontWeight: "700", color: "#0f766e" }}>Họ và tên học sinh:</label>
           <input type="text" placeholder="Nguyễn Văn A" value={studentName} onChange={e => setStudentName(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", marginTop: "6px", outline: "none" }} />
         </div>
-        <button onClick={() => { if (!studentName.trim()) { alert("Vui lòng nhập tên!"); return; } setStarted(true); }} style={{ width: "100%", padding: "12px", background: "#059669", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(5, 150, 105, 0.2)" }}>🚀 Bắt đầu làm bài</button>
+        <button onClick={() => { if (!studentName.trim()) { alert("Vui lòng nhập tên!"); return; } setStarted(true); }} style={{ width: "100%", padding: "12px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(13, 148, 136, 0.2)" }}>🚀 Bắt đầu làm bài</button>
       </div>
     </div>
   );
@@ -542,44 +542,44 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
 
   if (submitted) {
     return (
-      <div style={{ maxWidth: "700px", margin: "40px auto", background: "#fff", padding: "30px", borderRadius: "12px", border: "1px solid #a7f3d0", textAlign: "center", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
-        <h2 style={{ color: "#065f46" }}>🎉 ĐÃ NỘP BÀI THÀNH CÔNG!</h2>
+      <div style={{ maxWidth: "700px", margin: "40px auto", background: "#fff", padding: "30px", borderRadius: "12px", border: "1px solid #99f6e4", textAlign: "center", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
+        <h2 style={{ color: "#0f766e" }}>🎉 ĐÃ NỘP BÀI THÀNH CÔNG!</h2>
         <p style={{ color: "#334155" }}>Học sinh: <b>{studentName}</b></p>
-        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "20px", borderRadius: "8px", marginTop: "20px" }}>
-          Điểm trắc nghiệm tự động: <b style={{ color: "#059669", fontSize: "20px" }}>{autoScore.toFixed(2)} điểm</b>
+        <div style={{ background: "#f0fdf4", border: "1px solid #99f6e4", padding: "20px", borderRadius: "8px", marginTop: "20px" }}>
+          Điểm trắc nghiệm tự động: <b style={{ color: "#0d9488", fontSize: "20px" }}>{autoScore.toFixed(2)} điểm</b>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: "950px", margin: "20px auto", background: "#fff", borderRadius: "12px", border: "1px solid #a7f3d0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px", background: "#f0fdf4", borderBottom: "1px solid #d1fae5" }}>
-        <div>Học sinh: <b style={{ color: "#065f46" }}>{studentName}</b></div>
+    <div style={{ maxWidth: "950px", margin: "20px auto", background: "#fff", borderRadius: "12px", border: "1px solid #99f6e4", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px", background: "#f0fdf4", borderBottom: "1px solid #99f6e4" }}>
+        <div>Học sinh: <b style={{ color: "#0f766e" }}>{studentName}</b></div>
         <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-          <div style={{ fontWeight: "700", color: seconds < 60 ? "#dc2626" : "#065f46", background: "#fff", padding: "6px 12px", borderRadius: "6px", border: "1px solid #a7f3d0" }}>⏱️ {mm}:{ss}</div>
-          <button onClick={() => { if (confirm("Bạn có chắc chắn muốn nộp bài?")) submitExam(); }} style={{ background: "#059669", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }}>Nộp bài</button>
+          <div style={{ fontWeight: "700", color: seconds < 60 ? "#dc2626" : "#0f766e", background: "#fff", padding: "6px 12px", borderRadius: "6px", border: "1px solid #5eead4" }}>⏱️ {mm}:{ss}</div>
+          <button onClick={() => { if (confirm("Bạn có chắc chắn muốn nộp bài?")) submitExam(); }} style={{ background: "#0d9488", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }}>Nộp bài</button>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "220px 1fr" }}>
         <div style={{ background: "#f8fafc", padding: "16px", borderRight: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: "#059669", marginBottom: "12px", letterSpacing: "0.5px" }}>DANH SÁCH CÂU HỎI</div>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: "#0d9488", marginBottom: "12px", letterSpacing: "0.5px" }}>DANH SÁCH CÂU HỎI</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
             {exam.map((x: Question, i: number) => (
-              <button key={x.id} onClick={() => setCurrent(i)} style={{ padding: "8px", background: i === current ? "#059669" : (answers[x.id] !== undefined ? "#d1fae5" : "#fff"), color: i === current ? "#fff" : "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}>{i + 1}</button>
+              <button key={x.id} onClick={() => setCurrent(i)} style={{ padding: "8px", background: i === current ? "#0d9488" : (answers[x.id] !== undefined ? "#ccfbf1" : "#fff"), color: i === current ? "#fff" : "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}>{i + 1}</button>
             ))}
           </div>
         </div>
 
         <div style={{ padding: "24px" }}>
-          <div style={{ fontSize: "12px", color: "#059669", fontWeight: "600", marginBottom: "6px" }}>{sectionLabel[q.section]} · Câu {current + 1} ({q.points || 1} điểm)</div>
-          <h2 style={{ fontSize: "17px", color: "#1e293b", marginBottom: "20px", lineHeight: "1.5" }}>{q.content}</h2>
+          <div style={{ fontSize: "12px", color: "#0d9488", fontWeight: "600", marginBottom: "6px" }}>{sectionLabel[q.section]} · Câu {current + 1} ({q.points || 1} điểm)</div>
+          <h2 style={{ fontSize: "17px", color: "#0f172a", marginBottom: "20px", lineHeight: "1.5" }}>{q.content}</h2>
 
           {q.section === "MCQ" && q.options?.map((o) => (
-            <label key={o.key} style={{ display: "flex", gap: "12px", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: "8px", marginBottom: "10px", cursor: "pointer", background: answers[q.id] === o.key ? "#f0fdf4" : "#fff", borderColor: answers[q.id] === o.key ? "#059669" : "#e2e8f0", transition: "all 0.2s" }}>
+            <label key={o.key} style={{ display: "flex", gap: "12px", padding: "12px 14px", border: "1px solid #e2e8f0", borderRadius: "8px", marginBottom: "10px", cursor: "pointer", background: answers[q.id] === o.key ? "#f0fdf4" : "#fff", borderColor: answers[q.id] === o.key ? "#0d9488" : "#e2e8f0", transition: "all 0.2s" }}>
               <input type="radio" name={q.id} checked={answers[q.id] === o.key} onChange={() => setAnswers((a: any) => ({ ...a, [q.id]: o.key }))} />
-              <span><b style={{ color: "#059669" }}>{o.key}.</b> {o.text}</span>
+              <span><b style={{ color: "#0d9488" }}>{o.key}.</b> {o.text}</span>
             </label>
           ))}
 
@@ -608,18 +608,18 @@ function StudentView({ exam, answers, setAnswers, current, setCurrent, seconds, 
 
               <div style={{ marginTop: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
                 {!recording ? (
-                  <button type="button" onClick={startRecording} style={{ background: "#dc2626", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}>🔴 Ghi âm giải thích</button>
+                  <button type="button" onClick={startRecording} style={{ background: "#0284c7", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}>🔴 Ghi âm giải thích</button>
                 ) : (
                   <button type="button" onClick={stopRecording} style={{ background: "#475569", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}>⏹️ Dừng ghi âm</button>
                 )}
-                {typeof answers[q.id] === 'object' && answers[q.id]?.audioBlob && <span style={{ color: "#059669", fontSize: "12px", fontWeight: "700" }}>✓ Đã lưu file ghi âm</span>}
+                {typeof answers[q.id] === 'object' && answers[q.id]?.audioBlob && <span style={{ color: "#0d9488", fontSize: "12px", fontWeight: "700" }}>✓ Đã lưu file ghi âm</span>}
               </div>
             </div>
           )}
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
             <button disabled={current === 0} onClick={() => setCurrent((c: number) => Math.max(0, c - 1))} style={{ padding: "8px 16px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>⬅️ Câu trước</button>
-            <button disabled={current === exam.length - 1} onClick={() => setCurrent((c: number) => Math.min(exam.length - 1, c + 1))} style={{ padding: "8px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>Câu tiếp theo ➡</button>
+            <button disabled={current === exam.length - 1} onClick={() => setCurrent((c: number) => Math.min(exam.length - 1, c + 1))} style={{ padding: "8px 16px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>Câu tiếp theo ➡</button>
           </div>
         </div>
       </div>
